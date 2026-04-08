@@ -5,8 +5,11 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 # KAMIS API 설정
 # 인증키 발급: https://www.kamis.or.kr/customer/reference/openapi_write.do
 KAMIS_API_URL = "http://www.kamis.or.kr/service/price/xml.do"
-KAMIS_CERT_KEY = ""  # 발급받은 인증키 입력
-KAMIS_CERT_ID = ""   # 발급받은 인증 ID 입력
+KAMIS_CERT_KEY = os.environ.get('KAMIS_CERT_KEY', '')
+KAMIS_CERT_ID = os.environ.get('KAMIS_CERT_ID', '')
+
+# 가락시장 가격 정보 (키 불필요)
+GARAK_BASE_URL = "https://www.garakprice.com"
 
 # 농림축산식품부
 MAFRA_URL = "https://www.mafra.go.kr"
@@ -121,6 +124,90 @@ PRODUCT_CODES = {
         'category': '과일류',
         'unit': 'kg',
         'icon': '🍎',
+    },
+}
+
+# 가락시장 품목 매핑 (garakprice.com → 우리 품목명)
+# keyword: 가락시장 페이지에서 검색할 키워드
+# weight_kg: 기준단위의 kg 환산값 (가격을 kg당으로 변환)
+# grade: 사용할 등급 (특/상/중)
+GARAK_PRODUCT_MAP = {
+    '배추': {
+        'keyword': '배추',
+        'exclude': ['봄동', '얼갈이', '쌈배추', '절임'],
+        'unit_pattern': r'(\d+)\s*(?:키로|kg)',
+        'default_kg': 10,
+        'grade': '상',
+    },
+    '시금치': {
+        'keyword': '시금치',
+        'exclude': [],
+        'unit_pattern': r'(\d+)\s*(?:키로|kg)',
+        'default_kg': 4,
+        'grade': '상',
+    },
+    '상추': {
+        'keyword': '상추',
+        'exclude': ['적상추'],
+        'unit_pattern': r'(\d+)\s*(?:키로|kg)',
+        'default_kg': 4,
+        'grade': '상',
+    },
+    '고추': {
+        'keyword': '풋고추',
+        'exclude': ['청양', '홍고추', '꽈리'],
+        'unit_pattern': r'(\d+)\s*(?:키로|kg)',
+        'default_kg': 10,
+        'grade': '상',
+    },
+    '토마토': {
+        'keyword': '토마토',
+        'exclude': ['방울', '대추'],
+        'unit_pattern': r'(\d+)\s*(?:키로|kg)',
+        'default_kg': 5,
+        'grade': '상',
+    },
+    '오이': {
+        'keyword': '백다다기오이',
+        'exclude': [],
+        'unit_pattern': r'(\d+)\s*개',
+        'default_kg': 5,  # 50개 ≒ 약 5kg 기준 환산
+        'grade': '상',
+    },
+    '무': {
+        'keyword': '무',
+        'exclude': ['열무', '총각무', '알타리'],
+        'unit_pattern': r'(\d+)\s*(?:키로|kg)',
+        'default_kg': 20,
+        'grade': '상',
+    },
+    '대파': {
+        'keyword': '대파',
+        'exclude': [],
+        'unit_pattern': r'(\d+)\s*(?:키로|kg)',
+        'default_kg': 1,
+        'grade': '상',
+    },
+    '양파': {
+        'keyword': '양파',
+        'exclude': ['저장양파'],
+        'unit_pattern': r'(\d+)\s*(?:키로|kg)',
+        'default_kg': 12,
+        'grade': '상',
+    },
+    '감자': {
+        'keyword': '감자',
+        'exclude': ['저장', '수미'],
+        'unit_pattern': r'(\d+)\s*(?:키로|kg)',
+        'default_kg': 20,
+        'grade': '상',
+    },
+    '사과': {
+        'keyword': '사과',
+        'exclude': [],
+        'unit_pattern': r'(\d+)\s*(?:키로|kg)',
+        'default_kg': 10,
+        'grade': '상',
     },
 }
 

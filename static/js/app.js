@@ -12,6 +12,7 @@ var currentHistoryDays = 90;
 $(document).ready(function() {
     loadProducts();
     updateLastUpdateTime();
+    loadDataSourceInfo();
 });
 
 // ===== 품목 목록 로드 =====
@@ -483,6 +484,63 @@ function updateLastUpdateTime() {
         padZero(now.getHours()) + ':' +
         padZero(now.getMinutes());
     $('#lastUpdate').text(dateStr);
+}
+
+// ===== 데이터 소스 정보 =====
+function loadDataSourceInfo() {
+    $.ajax({
+        url: '/api/datasource',
+        method: 'GET',
+        success: function(data) {
+            if (data.success) {
+                renderSourceInfo(data.info);
+            }
+        }
+    });
+}
+
+function renderSourceInfo(info) {
+    var sourceNames = {
+        'GARAK': '가락시장 (도매)',
+        'KAMIS': 'KAMIS API (소매)',
+        'SAMPLE': '샘플 데이터',
+    };
+    var sourceBadges = {
+        'GARAK': 'badge-success',
+        'KAMIS': 'badge-info',
+        'SAMPLE': 'badge-secondary',
+    };
+
+    // 헤더 소스 상태
+    var statusHtml = '';
+    if (info.has_garak) {
+        statusHtml += '<i class="fas fa-check-circle text-success"></i> 가락시장 연결됨 ';
+    }
+    if (info.has_api_key) {
+        statusHtml += '<i class="fas fa-check-circle text-info"></i> KAMIS API 연결됨 ';
+    }
+    if (!info.has_garak && !info.has_api_key) {
+        statusHtml += '<i class="fas fa-info-circle text-warning"></i> 샘플 데이터 사용 중';
+    }
+    $('#sourceStatus').html(statusHtml);
+
+    // 소스 상세 테이블
+    var tableHtml = '';
+    if (info.sources && info.sources.length > 0) {
+        $.each(info.sources, function(i, src) {
+            var name = sourceNames[src.source] || src.source;
+            var badge = sourceBadges[src.source] || 'badge-light';
+            tableHtml += '<tr>' +
+                '<td><span class="badge ' + badge + '">' + name + '</span></td>' +
+                '<td><i class="fas fa-check-circle text-success"></i> 활성</td>' +
+                '<td>' + numberFormat(src.cnt) + '건</td>' +
+                '<td>' + src.min_date + ' ~ ' + src.max_date + '</td>' +
+                '</tr>';
+        });
+    } else {
+        tableHtml = '<tr><td colspan="4" class="text-center text-muted">데이터 없음</td></tr>';
+    }
+    $('#sourceTableBody').html(tableHtml);
 }
 
 // ===== 유틸리티 =====

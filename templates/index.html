@@ -49,12 +49,16 @@
                         농산물 가격 예측 AI
                     </h1>
                     <p class="lead text-muted">
-                        KAMIS 데이터 기반 농산물 가격 분석 및 AI 예측 서비스
+                        복수 데이터 소스 기반 농산물 가격 분석 및 AI 예측 서비스
                     </p>
                     <hr class="my-3">
                     <p class="text-muted small">
-                        <i class="fas fa-database"></i> 데이터 출처: KAMIS(농산물유통정보), 농림축산식품부, 농식품유통정보센터
+                        <i class="fas fa-database"></i> 데이터 출처:
+                        <span class="badge badge-success">가락시장 실시간</span>
+                        <span class="badge badge-info">KAMIS API</span>
+                        <span class="badge badge-secondary">샘플 데이터</span>
                     </p>
+                    <div id="sourceStatus" class="small text-muted mt-1"></div>
                 </div>
                 <div class="col-md-4 text-center">
                     <div class="card border-success">
@@ -266,14 +270,43 @@
                         </h5>
                     </div>
                     <div class="card-body">
+                        <!-- 소스별 현황 테이블 -->
+                        <div id="sourceDetailTable" class="mb-4">
+                            <table class="table table-sm table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>데이터 소스</th>
+                                        <th>상태</th>
+                                        <th>데이터 건수</th>
+                                        <th>기간</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sourceTableBody">
+                                    <tr><td colspan="4" class="text-center text-muted">로딩 중...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="card border-success mb-3">
                                     <div class="card-body text-center">
                                         <i class="fas fa-store fa-2x text-success mb-2"></i>
+                                        <h6>가락시장</h6>
+                                        <p class="small text-muted">도매 경매가 (키 불필요)</p>
+                                        <a href="https://www.garakprice.com" target="_blank" class="btn btn-sm btn-outline-success">
+                                            방문하기 <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-info mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
                                         <h6>KAMIS</h6>
-                                        <p class="small text-muted">농산물유통정보</p>
-                                        <a href="https://www.kamis.or.kr" target="_blank" class="btn btn-sm btn-outline-success">
+                                        <p class="small text-muted">소매 가격 (API 키 필요)</p>
+                                        <a href="https://www.kamis.or.kr" target="_blank" class="btn btn-sm btn-outline-info">
                                             방문하기 <i class="fas fa-external-link-alt"></i>
                                         </a>
                                     </div>
@@ -286,18 +319,6 @@
                                         <h6>농림축산식품부</h6>
                                         <p class="small text-muted">정책 및 통계 자료</p>
                                         <a href="https://www.mafra.go.kr" target="_blank" class="btn btn-sm btn-outline-primary">
-                                            방문하기 <i class="fas fa-external-link-alt"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card border-info mb-3">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-truck fa-2x text-info mb-2"></i>
-                                        <h6>농식품유통정보센터</h6>
-                                        <p class="small text-muted">유통 정보</p>
-                                        <a href="http://www.atc.go.kr" target="_blank" class="btn btn-sm btn-outline-info">
                                             방문하기 <i class="fas fa-external-link-alt"></i>
                                         </a>
                                     </div>

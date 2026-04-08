@@ -158,6 +158,18 @@ def api_datasource():
     })
 
 
+@app.route('/api/garak-today', methods=['GET'])
+def api_garak_today():
+    """가락시장 오늘 가격 (실시간 스크래핑)"""
+    from data_collector import fetch_garak_all_products_single_day
+    results = fetch_garak_all_products_single_day()
+    return jsonify({
+        'success': bool(results),
+        'data': results,
+        'count': len(results),
+    })
+
+
 # ===== 메인 =====
 if __name__ == '__main__':
     initialize()
