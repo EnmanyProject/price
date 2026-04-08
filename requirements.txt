@@ -6,12 +6,8 @@ requests==2.31.0
 pandas==2.1.4
 numpy==1.26.4
 statsmodels==0.14.1
-scikit-learn==1.3.2
-SQLAlchemy==1.4.32
-APScheduler==3.9.1
+beautifulsoup4==4.12.3
 charset-normalizer==3.3.2
 urllib3==2.1.0
 certifi==2023.11.17
 idna==3.6
-beautifulsoup4==4.12.3
-lxml==5.1.0

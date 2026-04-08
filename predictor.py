@@ -4,22 +4,37 @@
 - ARIMA 시계열 예측
 - 이동평균 기반 단순 예측 (폴백)
 - 예측 신뢰구간 계산
+
+Vercel 서버리스 환경을 위해 무거운 패키지는 lazy import 처리
 """
 
-import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
-from statsmodels.tsa.arima.model import ARIMA
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
 import warnings
 warnings.filterwarnings('ignore')
 
+import math
+from datetime import datetime, timedelta
 from data_collector import get_price_history
 from database import get_db
+
+# lazy import 대상 — 호출 시점에 로드
+np = None
+pd = None
+
+
+def _ensure_imports():
+    """numpy, pandas를 필요할 때만 로드"""
+    global np, pd
+    if np is None:
+        import numpy
+        np = numpy
+    if pd is None:
+        import pandas
+        pd = pandas
 
 
 def prepare_time_series(product_name, days=365):
     """시계열 데이터 준비"""
+    _ensure_imports()
     history = get_price_history(product_name, days)
     if not history:
         return None
@@ -40,9 +55,9 @@ def prepare_time_series(product_name, days=365):
 
 
 def predict_arima(product_name, forecast_days=30):
-    """
-    ARIMA 모델을 사용한 가격 예측
-    """
+    """ARIMA 모델을 사용한 가격 예측"""
+    _ensure_imports()
+
     df = prepare_time_series(product_name, days=730)
     if df is None or len(df) < 60:
         return predict_moving_average(product_name, forecast_days)
@@ -50,22 +65,19 @@ def predict_arima(product_name, forecast_days=30):
     prices = df['price'].values
 
     try:
-        # ARIMA(5,1,2) - 일반적인 농산물 가격 예측에 적합
+        from statsmodels.tsa.arima.model import ARIMA
         model = ARIMA(prices, order=(5, 1, 2))
         fitted = model.fit()
 
-        # 예측
         forecast = fitted.get_forecast(steps=forecast_days)
         predicted = forecast.predicted_mean
-        conf_int = forecast.conf_int(alpha=0.1)  # 90% 신뢰구간
+        conf_int = forecast.conf_int(alpha=0.1)
 
-        # 결과 생성
         last_date = df.index[-1]
         results = []
         for i in range(forecast_days):
             pred_date = last_date + timedelta(days=i + 1)
-            pred_price = max(predicted[i], 0)  # 음수 방지
-
+            pred_price = max(predicted[i], 0)
             lower = max(conf_int[i, 0], 0)
             upper = conf_int[i, 1]
 
@@ -77,7 +89,6 @@ def predict_arima(product_name, forecast_days=30):
                 'model': 'ARIMA(5,1,2)',
             })
 
-        # 예측 정확도 지표
         aic = fitted.aic
         bic = fitted.bic
 
@@ -100,9 +111,9 @@ def predict_arima(product_name, forecast_days=30):
 
 
 def predict_exponential_smoothing(product_name, forecast_days=30):
-    """
-    지수평활법 기반 예측 (대안 모델)
-    """
+    """지수평활법 기반 예측"""
+    _ensure_imports()
+
     df = prepare_time_series(product_name, days=730)
     if df is None or len(df) < 60:
         return predict_moving_average(product_name, forecast_days)
@@ -110,6 +121,7 @@ def predict_exponential_smoothing(product_name, forecast_days=30):
     prices = df['price'].values
 
     try:
+        from statsmodels.tsa.holtwinters import ExponentialSmoothing
         model = ExponentialSmoothing(
             prices,
             seasonal_periods=30,
@@ -119,7 +131,6 @@ def predict_exponential_smoothing(product_name, forecast_days=30):
         fitted = model.fit(optimized=True)
         predicted = fitted.forecast(forecast_days)
 
-        # 신뢰구간 (잔차 기반)
         residuals = fitted.resid
         std_resid = np.std(residuals)
 
@@ -128,7 +139,7 @@ def predict_exponential_smoothing(product_name, forecast_days=30):
         for i in range(forecast_days):
             pred_date = last_date + timedelta(days=i + 1)
             pred_price = max(predicted[i], 0)
-            margin = std_resid * 1.645 * np.sqrt(i + 1) * 0.3
+            margin = std_resid * 1.645 * math.sqrt(i + 1) * 0.3
 
             results.append({
                 'date': pred_date.strftime('%Y-%m-%d'),
@@ -155,9 +166,9 @@ def predict_exponential_smoothing(product_name, forecast_days=30):
 
 
 def predict_moving_average(product_name, forecast_days=30):
-    """
-    이동평균 기반 단순 예측 (폴백 모델)
-    """
+    """이동평균 기반 단순 예측 (폴백 모델)"""
+    _ensure_imports()
+
     df = prepare_time_series(product_name, days=365)
     if df is None or len(df) < 7:
         return {
@@ -170,12 +181,10 @@ def predict_moving_average(product_name, forecast_days=30):
 
     prices = df['price'].values
 
-    # 7일, 30일 이동평균
     ma7 = np.mean(prices[-7:])
     ma30 = np.mean(prices[-30:]) if len(prices) >= 30 else ma7
     std30 = np.std(prices[-30:]) if len(prices) >= 30 else np.std(prices[-7:])
 
-    # 추세 계산
     if len(prices) >= 14:
         recent_trend = (np.mean(prices[-7:]) - np.mean(prices[-14:-7])) / 7
     else:
@@ -188,7 +197,7 @@ def predict_moving_average(product_name, forecast_days=30):
         pred_price = ma7 * 0.6 + ma30 * 0.4 + recent_trend * (i + 1)
         pred_price = max(pred_price, 0)
 
-        margin = std30 * 1.5 * np.sqrt((i + 1) / 7)
+        margin = std30 * 1.5 * math.sqrt((i + 1) / 7)
 
         results.append({
             'date': pred_date.strftime('%Y-%m-%d'),
@@ -215,13 +224,14 @@ def predict_moving_average(product_name, forecast_days=30):
 
 def get_price_statistics(product_name, days=365):
     """품목별 가격 통계"""
+    _ensure_imports()
+
     df = prepare_time_series(product_name, days)
     if df is None or len(df) < 2:
         return None
 
     prices = df['price'].values
 
-    # 전일 대비 변동
     if len(prices) >= 2:
         daily_change = prices[-1] - prices[-2]
         daily_change_pct = (daily_change / prices[-2]) * 100
@@ -229,7 +239,6 @@ def get_price_statistics(product_name, days=365):
         daily_change = 0
         daily_change_pct = 0
 
-    # 주간 변동
     if len(prices) >= 7:
         weekly_change = prices[-1] - prices[-7]
         weekly_change_pct = (weekly_change / prices[-7]) * 100
