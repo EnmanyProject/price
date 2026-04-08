@@ -3,9 +3,6 @@ Werkzeug==2.0.3
 Jinja2==3.0.3
 MarkupSafe==2.1.5
 requests==2.31.0
-pandas==2.1.4
-numpy==1.26.4
-statsmodels==0.14.1
 beautifulsoup4==4.12.3
 charset-normalizer==3.3.2
 urllib3==2.1.0
