@@ -1,0 +1,198 @@
+/* 농산물 가격 예측 시스템 - 2021 스타일 CSS */
+
+/* 기본 스타일 */
+body {
+    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+/* 네비게이션 */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.navbar-brand i {
+    margin-right: 5px;
+}
+
+/* 점보트론 */
+.jumbotron {
+    border-bottom: 3px solid #28a745;
+}
+
+.jumbotron h1 {
+    font-weight: 700;
+}
+
+/* 품목 카드 */
+.product-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    text-align: center;
+    padding: 15px 10px;
+    margin-bottom: 10px;
+    background: #fff;
+}
+
+.product-card:hover {
+    border-color: #28a745;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+    transform: translateY(-2px);
+}
+
+.product-card.active {
+    border-color: #28a745;
+    background-color: #e8f5e9;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.product-card .product-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.product-card .product-name {
+    font-weight: bold;
+    font-size: 1rem;
+    color: #333;
+}
+
+.product-card .product-price {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 5px;
+}
+
+.product-card .product-change {
+    font-size: 0.8rem;
+    margin-top: 3px;
+}
+
+.price-up {
+    color: #dc3545;
+}
+
+.price-down {
+    color: #007bff;
+}
+
+.price-same {
+    color: #6c757d;
+}
+
+/* 통계 카드 */
+.card {
+    border-radius: 8px;
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0 !important;
+}
+
+/* 차트 영역 */
+#priceChart, #predictionChart {
+    max-height: 400px;
+}
+
+/* 예측 로딩 */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* 테이블 */
+.table th {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.table td {
+    font-size: 0.85rem;
+    vertical-align: middle;
+}
+
+/* 버튼 그룹 */
+.btn-group .btn {
+    font-size: 0.8rem;
+}
+
+.btn-group .btn.active {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+    color: #fff !important;
+}
+
+/* 푸터 */
+footer {
+    border-top: 3px solid #28a745;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .jumbotron h1 {
+        font-size: 1.5rem;
+    }
+
+    .product-card .product-icon {
+        font-size: 1.8rem;
+    }
+
+    .product-card .product-name {
+        font-size: 0.85rem;
+    }
+
+    #priceChart, #predictionChart {
+        max-height: 250px;
+    }
+}
+
+/* 카드 그림자 */
+.shadow-sm {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+
+/* 데이터 출처 카드 */
+.card-body .fa-2x {
+    display: block;
+}
+
+/* 변동률 배지 */
+.badge-change {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+/* 로딩 오버레이 */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* 2021년 스타일 - 약간 둥근 모서리, 부드러운 그림자 */
+.card {
+    border: 1px solid #e0e0e0;
+}
+
+.card-header h5, .card-header h6 {
+    font-size: 0.95rem;
+}
+
+/* 선택된 기간 버튼 */
+.period-btn.active {
+    background-color: #28a745;
+    color: white;
+}

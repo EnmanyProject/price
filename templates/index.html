@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>농산물 가격 예측 시스템 v1.0</title>
+
+    <!-- Bootstrap 4.6 (2021 스타일) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+    <!-- Font Awesome 5 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <!-- 커스텀 CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <!-- 네비게이션 바 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-leaf"></i> 농산물 가격 예측 시스템
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/"><i class="fas fa-home"></i> 홈</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#dashboard"><i class="fas fa-chart-line"></i> 대시보드</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about"><i class="fas fa-info-circle"></i> 정보</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 헤더 배너 -->
+    <div class="jumbotron jumbotron-fluid bg-light mb-0" style="padding: 2rem 0;">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-5">
+                        <i class="fas fa-seedling text-success"></i>
+                        농산물 가격 예측 AI
+                    </h1>
+                    <p class="lead text-muted">
+                        KAMIS 데이터 기반 농산물 가격 분석 및 AI 예측 서비스
+                    </p>
+                    <hr class="my-3">
+                    <p class="text-muted small">
+                        <i class="fas fa-database"></i> 데이터 출처: KAMIS(농산물유통정보), 농림축산식품부, 농식품유통정보센터
+                    </p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h6 class="card-title text-success">
+                                <i class="fas fa-clock"></i> 최종 업데이트
+                            </h6>
+                            <p class="card-text" id="lastUpdate">로딩 중...</p>
+                            <button class="btn btn-sm btn-outline-success" onclick="refreshData()">
+                                <i class="fas fa-sync-alt"></i> 데이터 새로고침
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="container mt-4" id="dashboard">
+
+        <!-- 품목 선택 카드 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-th-large text-success"></i> 품목 선택
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="productGrid">
+                            <!-- 품목 카드가 동적으로 생성됩니다 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 가격 현황 요약 -->
+        <div class="row mb-4" id="priceOverview" style="display: none;">
+            <div class="col-md-3">
+                <div class="card text-center border-primary shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted">현재 가격</h6>
+                        <h3 class="text-primary" id="currentPrice">-</h3>
+                        <small class="text-muted">원/kg</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-info shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted">평균 가격 (1년)</h6>
+                        <h3 class="text-info" id="avgPrice">-</h3>
+                        <small class="text-muted">원/kg</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center shadow-sm" id="dailyChangeCard">
+                    <div class="card-body">
+                        <h6 class="text-muted">전일 대비</h6>
+                        <h3 id="dailyChange">-</h3>
+                        <small id="dailyChangePct">-</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center shadow-sm" id="weeklyChangeCard">
+                    <div class="card-body">
+                        <h6 class="text-muted">전주 대비</h6>
+                        <h3 id="weeklyChange">-</h3>
+                        <small id="weeklyChangePct">-</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 차트 영역 -->
+        <div class="row mb-4" id="chartSection" style="display: none;">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-area text-success"></i>
+                            <span id="chartTitle">가격 추이</span>
+                        </h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-secondary active" onclick="changeHistoryRange(90)">3개월</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="changeHistoryRange(180)">6개월</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="changeHistoryRange(365)">1년</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="changeHistoryRange(730)">2년</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="priceChart" height="120"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 예측 설정 및 결과 -->
+        <div class="row mb-4" id="predictionSection" style="display: none;">
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-magic"></i> AI 예측 설정
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="forecastPeriod">
+                                <i class="fas fa-calendar-alt"></i> 예측 기간
+                            </label>
+                            <select class="form-control" id="forecastPeriod">
+                                <option value="7">1주일 (7일)</option>
+                                <option value="14">2주일 (14일)</option>
+                                <option value="30" selected>1개월 (30일)</option>
+                                <option value="90">3개월 (90일)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="modelType">
+                                <i class="fas fa-brain"></i> 예측 모델
+                            </label>
+                            <select class="form-control" id="modelType">
+                                <option value="arima" selected>ARIMA (자기회귀 누적 이동평균)</option>
+                                <option value="exp_smoothing">지수평활법 (Holt-Winters)</option>
+                                <option value="moving_avg">이동평균</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-warning btn-block" onclick="runPrediction()">
+                            <i class="fas fa-play"></i> 예측 실행
+                        </button>
+
+                        <hr>
+
+                        <!-- 모델 정보 -->
+                        <div id="modelInfo" style="display: none;">
+                            <h6><i class="fas fa-info-circle"></i> 모델 정보</h6>
+                            <table class="table table-sm table-bordered">
+                                <tbody id="modelInfoTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line text-danger"></i>
+                            <span id="predictionChartTitle">예측 결과</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="predictionLoading" style="display: none;" class="text-center py-5">
+                            <div class="spinner-border text-warning" role="status">
+                                <span class="sr-only">분석 중...</span>
+                            </div>
+                            <p class="mt-2 text-muted">AI가 가격을 예측하고 있습니다...</p>
+                        </div>
+                        <canvas id="predictionChart" height="100"></canvas>
+                        <div id="predictionEmpty" class="text-center py-5 text-muted">
+                            <i class="fas fa-arrow-left fa-2x mb-3 d-block"></i>
+                            품목을 선택하고 예측을 실행하세요
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 예측 테이블 -->
+                <div class="card shadow-sm mt-3" id="predictionTableCard" style="display: none;">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-table"></i> 예측 상세 데이터
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>날짜</th>
+                                        <th class="text-right">예측가격 (원)</th>
+                                        <th class="text-right">하한 (원)</th>
+                                        <th class="text-right">상한 (원)</th>
+                                        <th class="text-center">변동</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="predictionTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 데이터 출처 안내 -->
+        <div class="row mb-4" id="about">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-link text-success"></i> 데이터 출처 및 참고 사이트
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card border-success mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-store fa-2x text-success mb-2"></i>
+                                        <h6>KAMIS</h6>
+                                        <p class="small text-muted">농산물유통정보</p>
+                                        <a href="https://www.kamis.or.kr" target="_blank" class="btn btn-sm btn-outline-success">
+                                            방문하기 <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-primary mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-landmark fa-2x text-primary mb-2"></i>
+                                        <h6>농림축산식품부</h6>
+                                        <p class="small text-muted">정책 및 통계 자료</p>
+                                        <a href="https://www.mafra.go.kr" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            방문하기 <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-info mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-truck fa-2x text-info mb-2"></i>
+                                        <h6>농식품유통정보센터</h6>
+                                        <p class="small text-muted">유통 정보</p>
+                                        <a href="http://www.atc.go.kr" target="_blank" class="btn btn-sm btn-outline-info">
+                                            방문하기 <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-warning mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-chart-bar fa-2x text-warning mb-2"></i>
+                                        <h6>공공데이터포털</h6>
+                                        <p class="small text-muted">Open API</p>
+                                        <a href="https://www.data.go.kr" target="_blank" class="btn btn-sm btn-outline-warning">
+                                            방문하기 <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-leaf"></i> 농산물 가격 예측 시스템</h6>
+                    <p class="small text-muted">
+                        &copy; 2021 Agricultural Price Prediction System v1.0<br>
+                        본 서비스는 참고용이며, 실제 투자/거래 판단의 근거로 사용할 수 없습니다.
+                    </p>
+                </div>
+                <div class="col-md-6 text-right">
+                    <p class="small text-muted">
+                        <i class="fas fa-code"></i> Python Flask + Bootstrap 4 + Chart.js<br>
+                        <i class="fas fa-brain"></i> ARIMA / Holt-Winters 시계열 예측
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts (2021 스타일) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

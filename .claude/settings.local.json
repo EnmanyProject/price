@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python -c \"import sys; print\\(sys.executable\\)\")",
+      "Bash(C:\\\\Users\\\\dosik\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe:*)",
+      "WebSearch",
+      "WebFetch(domain:www.kamis.or.kr)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:makeai.kr)",
+      "WebFetch(domain:www.kamis.co.kr)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:pypi.org)",
+      "Bash(curl -s \"http://www.kamis.or.kr/service/price/xml.do?action=dailyPriceByCategoryList&p_product_cls_code=01&p_item_category_code=200&p_country_code=1101&p_regday=2026-04-07&p_convert_kg_yn=N&p_cert_key=d009&p_cert_id=d009&p_returntype=json\")",
+      "Bash(curl -s \"http://www.kamis.or.kr/service/price/xml.do?action=productInfo&p_cert_key=d009&p_cert_id=d009&p_returntype=json\")",
+      "Bash(curl -s --max-time 10 \"http://www.kamis.or.kr/service/price/xml.do?action=dailyPriceByCategoryList&p_product_cls_code=01&p_item_category_code=200&p_country_code=1101&p_regday=2026-04-07&p_convert_kg_yn=N&p_cert_key=d009&p_cert_id=d009&p_returntype=json\")",
+      "Bash(curl -v --max-time 10 \"http://www.kamis.or.kr/service/price/xml.do?action=dailyPriceByCategoryList&p_product_cls_code=01&p_item_category_code=200&p_country_code=1101&p_regday=2026-04-07&p_convert_kg_yn=N&p_cert_key=d009&p_cert_id=d009&p_returntype=json\")",
+      "WebFetch(domain:www.data.go.kr)",
+      "Bash(taskkill //F //IM python.exe)",
+      "Bash(\"C:\\\\Users\\\\dosik\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\" app.py)",
+      "Bash(gh auth:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
