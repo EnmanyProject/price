@@ -6,17 +6,25 @@ Flask 앱을 Vercel에서 구동
 
 import sys
 import os
+import traceback
 
 # 프로젝트 루트를 path에 추가
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Flask, render_template, jsonify, request
+
+# Vercel은 /tmp만 쓰기 가능 → DB 경로를 먼저 오버라이드
+import config
+config.DATABASE_PATH = '/tmp/prices.db'
+
 from database import init_db, get_db
 from data_collector import (
     collect_all_data,
     get_price_history,
     get_latest_prices,
     get_data_source_info,
+    generate_sample_data,
+    save_price_data,
 )
 from predictor import (
     predict_arima,
@@ -29,17 +37,38 @@ from config import PRODUCT_CODES
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SECRET_KEY'] = 'vegetable-price-predictor-2021'
 
-# Vercel은 /tmp만 쓰기 가능 → DB 경로 오버라이드
-import config
-config.DATABASE_PATH = '/tmp/prices.db'
-
 
 def ensure_data():
-    """데이터가 없으면 초기화"""
-    init_db()
-    latest = get_latest_prices()
-    if not latest:
-        collect_all_data()
+    """데이터가 없으면 샘플 데이터로 빠르게 초기화 (Vercel 타임아웃 방지)"""
+    try:
+        init_db()
+        latest = get_latest_prices()
+        if not latest:
+            # 가락시장 스크래핑은 시간이 오래 걸리므로 샘플 데이터로 우선 초기화
+            for product_name in PRODUCT_CODES.keys():
+                data = generate_sample_data(product_name, days=365)
+                save_price_data(data)
+    except Exception as e:
+        print(f"[ERROR] ensure_data 실패: {e}")
+        traceback.print_exc()
+
+
+# 에러 핸들러 — 디버그용 상세 메시지 반환
+@app.errorhandler(500)
+def handle_500(e):
+    return jsonify({
+        'error': str(e),
+        'traceback': traceback.format_exc(),
+    }), 500
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    return jsonify({
+        'error': str(e),
+        'type': type(e).__name__,
+        'traceback': traceback.format_exc(),
+    }), 500
 
 
 @app.route('/')
@@ -123,6 +152,7 @@ def api_predict():
 
 @app.route('/api/refresh', methods=['POST'])
 def api_refresh():
+    """데이터 새로고침 — 가락시장 실시간 + 샘플 보충"""
     try:
         saved = collect_all_data()
         return jsonify({
@@ -136,6 +166,7 @@ def api_refresh():
 
 @app.route('/api/datasource', methods=['GET'])
 def api_datasource():
+    ensure_data()
     info = get_data_source_info()
     return jsonify({'success': True, 'info': info})
 
@@ -150,3 +181,9 @@ def api_garak_today():
         'data': results,
         'count': len(results),
     })
+
+
+@app.route('/api/health', methods=['GET'])
+def api_health():
+    """헬스체크"""
+    return jsonify({'status': 'ok', 'python': sys.version})
