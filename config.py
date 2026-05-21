@@ -96,7 +96,7 @@ PRODUCT_CODES = {
         'rank_code': '04',
         'category': '엽경채류',
         'unit': 'kg',
-        'icon': '🧅',
+        'icon': '🌿',
     },
     '양파': {
         'item_category_code': '200',
