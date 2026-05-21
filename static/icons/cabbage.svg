@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <ellipse cx="32" cy="36" rx="24" ry="22" fill="#558b2f"/>
+  <path d="M32 12 Q14 18 12 36 Q16 52 32 56 Q48 52 52 36 Q50 18 32 12 Z" fill="#7cb342"/>
+  <path d="M32 18 Q20 24 18 36 Q22 48 32 50 Q42 48 46 36 Q44 24 32 18 Z" fill="#9ccc65"/>
+  <path d="M32 24 Q26 30 26 36 Q28 42 32 44 Q36 42 38 36 Q38 30 32 24 Z" fill="#c5e1a5"/>
+  <path d="M32 12 L32 56" stroke="#33691e" stroke-width="1" opacity="0.4"/>
+  <path d="M20 22 Q24 34 22 48" stroke="#33691e" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <path d="M44 22 Q40 34 42 48" stroke="#33691e" stroke-width="0.8" fill="none" opacity="0.4"/>
+</svg>

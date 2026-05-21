@@ -65,9 +65,14 @@ function renderProductGrid(products) {
             changeText = numberFormat(product.daily_change);
         }
 
+        // icon이 / 로 시작하면 SVG 파일 경로 → <img>, 아니면 이모지 텍스트 (폴백)
+        var iconHtml = product.icon && product.icon.charAt(0) === '/'
+            ? '<img class="product-icon" src="' + product.icon + '" alt="' + product.name + '" />'
+            : '<span class="product-icon">' + (product.icon || '') + '</span>';
+
         html += '<div class="col-6 col-md-4 col-lg-2">' +
             '<div class="product-card" onclick="selectProduct(\'' + product.name + '\')" id="card-' + product.name + '">' +
-            '<span class="product-icon">' + product.icon + '</span>' +
+            iconHtml +
             '<div class="product-name">' + product.name + '</div>' +
             '<div class="product-price">' + numberFormat(product.price) + '원</div>' +
             '<div class="product-change ' + changeClass + '">' +

@@ -44,7 +44,7 @@ PRODUCT_CODES = {
         'rank_code': '04',
         'category': '엽경채류',
         'unit': 'kg',
-        'icon': '🥬',
+        'icon': '/static/icons/cabbage.svg',
     },
     '시금치': {
         'item_category_code': '200',
@@ -53,7 +53,7 @@ PRODUCT_CODES = {
         'rank_code': '04',
         'category': '엽경채류',
         'unit': 'kg',
-        'icon': '🥬',
+        'icon': '/static/icons/spinach.svg',
     },
     '상추': {
         'item_category_code': '200',
@@ -62,7 +62,7 @@ PRODUCT_CODES = {
         'rank_code': '04',
         'category': '엽경채류',
         'unit': 'kg',
-        'icon': '🥬',
+        'icon': '/static/icons/lettuce.svg',
     },
     '고추': {
         'item_category_code': '200',
@@ -71,7 +71,7 @@ PRODUCT_CODES = {
         'rank_code': '04',
         'category': '과채류',
         'unit': 'kg',
-        'icon': '🌶️',
+        'icon': '/static/icons/pepper.svg',
     },
     '토마토': {
         'item_category_code': '200',
@@ -80,7 +80,7 @@ PRODUCT_CODES = {
         'rank_code': '04',
         'category': '과채류',
         'unit': 'kg',
-        'icon': '🍅',
+        'icon': '/static/icons/tomato.svg',
     },
     '오이': {
         'item_category_code': '200',
@@ -89,7 +89,7 @@ PRODUCT_CODES = {
         'rank_code': '04',
         'category': '과채류',
         'unit': 'kg',
-        'icon': '🥒',
+        'icon': '/static/icons/cucumber.svg',
     },
     '무': {
         'item_category_code': '200',
@@ -98,7 +98,7 @@ PRODUCT_CODES = {
         'rank_code': '04',
         'category': '근채류',
         'unit': 'kg',
-        'icon': '🥕',
+        'icon': '/static/icons/radish.svg',
     },
     '대파': {
         'item_category_code': '200',
@@ -107,7 +107,7 @@ PRODUCT_CODES = {
         'rank_code': '04',
         'category': '엽경채류',
         'unit': 'kg',
-        'icon': '🌿',
+        'icon': '/static/icons/green-onion.svg',
     },
     '양파': {
         'item_category_code': '200',
@@ -116,7 +116,7 @@ PRODUCT_CODES = {
         'rank_code': '04',
         'category': '근채류',
         'unit': 'kg',
-        'icon': '🧅',
+        'icon': '/static/icons/onion.svg',
     },
     '감자': {
         'item_category_code': '100',
@@ -125,7 +125,7 @@ PRODUCT_CODES = {
         'rank_code': '04',
         'category': '근채류',
         'unit': 'kg',
-        'icon': '🥔',
+        'icon': '/static/icons/potato.svg',
     },
     '사과': {
         'item_category_code': '400',
@@ -134,7 +134,7 @@ PRODUCT_CODES = {
         'rank_code': '04',
         'category': '과일류',
         'unit': 'kg',
-        'icon': '🍎',
+        'icon': '/static/icons/apple.svg',
     },
 }
 
