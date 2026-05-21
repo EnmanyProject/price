@@ -38,19 +38,43 @@ app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SECRET_KEY'] = 'vegetable-price-predictor-2021'
 
 
+# 컨테이너 인스턴스 단위로 1회만 초기화하도록 글로벌 플래그
+# Vercel Fluid Compute는 인스턴스를 재사용하므로 이 플래그가 유효함
+_DATA_INITIALIZED = False
+
+
 def ensure_data():
-    """데이터가 없으면 샘플 데이터로 빠르게 초기화 (Vercel 타임아웃 방지)"""
+    """
+    데이터가 없으면 샘플 데이터로 빠르게 초기화 (Vercel 타임아웃 방지)
+    - 컨테이너 단위 1회만 실행 (글로벌 플래그)
+    - 모든 품목 데이터를 한 번에 모아 batch insert
+    """
+    global _DATA_INITIALIZED
+    if _DATA_INITIALIZED:
+        return
+
     try:
         init_db()
         latest = get_latest_prices()
         if not latest:
-            # 가락시장 스크래핑은 시간이 오래 걸리므로 샘플 데이터로 우선 초기화
+            # 11품목 × 365일 = 4,015건을 한 번의 executemany로 처리
+            all_data = []
             for product_name in PRODUCT_CODES.keys():
-                data = generate_sample_data(product_name, days=365)
-                save_price_data(data)
+                all_data.extend(generate_sample_data(product_name, days=365))
+            save_price_data(all_data)
+
+        _DATA_INITIALIZED = True
     except Exception as e:
         print(f"[ERROR] ensure_data 실패: {e}")
         traceback.print_exc()
+
+
+# 모듈 import 시점에 즉시 초기화 → cold start 비용 한 번에 지불
+# 이후 요청은 메모리/DB에서 즉시 응답
+try:
+    ensure_data()
+except Exception as e:
+    print(f"[WARN] 초기 데이터 로드 실패 (요청 시 재시도): {e}")
 
 
 # 에러 핸들러 — 디버그용 상세 메시지 반환

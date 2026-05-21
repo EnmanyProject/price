@@ -427,43 +427,47 @@ def generate_sample_data(product_name, days=730):
     base_price = base_prices.get(product_name, 3000)
     pattern = seasonal_patterns.get(product_name, [1.0] * 12)
 
+    # 경량화: random.gauss 대신 uniform 사용 (Vercel cold start 최적화)
     data = []
     end_date = datetime.now()
     start_date = end_date - timedelta(days=days)
 
-    current = start_date
     prev_price = base_price
     trend = random.uniform(-0.0001, 0.0003)
+    noise_amp = base_price * 0.03
+    max_change_ratio = 0.08
+    min_price = base_price * 0.3
 
-    while current <= end_date:
+    for day_offset in range(days + 1):
+        current = start_date + timedelta(days=day_offset)
         month_idx = current.month - 1
         seasonal = pattern[month_idx]
-
-        day_offset = (current - start_date).days
         trend_factor = 1.0 + trend * day_offset
-        noise = random.gauss(0, base_price * 0.03)
+        noise = (random.random() - 0.5) * 2 * noise_amp
 
         price = base_price * seasonal * trend_factor + noise
 
+        # 가끔 가격 급변동 (2% 확률)
         if random.random() < 0.02:
-            spike = random.choice([-1, 1]) * random.uniform(0.15, 0.35)
-            price *= (1 + spike)
+            price *= 1 + (random.random() - 0.5) * 0.6
 
-        max_change = prev_price * 0.08
-        price = max(prev_price - max_change, min(prev_price + max_change, price))
-        price = max(price, base_price * 0.3)
-        price = round(price, 0)
+        # 일일 변동폭 제한 (±8%)
+        max_change = prev_price * max_change_ratio
+        if price > prev_price + max_change:
+            price = prev_price + max_change
+        elif price < prev_price - max_change:
+            price = prev_price - max_change
+        if price < min_price:
+            price = min_price
 
         data.append({
             'product_name': product_name,
-            'price': price,
+            'price': round(price, 0),
             'date': current.strftime('%Y-%m-%d'),
             'market': '전국평균',
             'source': 'SAMPLE',
         })
-
         prev_price = price
-        current += timedelta(days=1)
 
     return data
 
@@ -473,29 +477,37 @@ def generate_sample_data(product_name, days=730):
 # ============================================================
 
 def save_price_data(data_list):
-    """가격 데이터를 DB에 저장"""
+    """가격 데이터를 DB에 저장 — executemany batch insert (Vercel cold start 최적화)"""
+    if not data_list:
+        return 0
+
     conn = get_db()
     cursor = conn.cursor()
-    saved = 0
 
-    for item in data_list:
-        try:
-            cursor.execute('''
-                INSERT OR REPLACE INTO price_data
-                (product_name, price, date, market, source)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (
-                item['product_name'],
-                item['price'],
-                item['date'],
-                item.get('market', '서울'),
-                item.get('source', 'KAMIS'),
-            ))
-            saved += 1
-        except Exception as e:
-            print(f"[ERROR] 데이터 저장 실패: {e}")
+    # 한 번에 모든 row를 튜플 리스트로 준비 → executemany로 일괄 INSERT
+    rows = [
+        (
+            item['product_name'],
+            item['price'],
+            item['date'],
+            item.get('market', '서울'),
+            item.get('source', 'KAMIS'),
+        )
+        for item in data_list
+    ]
 
-    conn.commit()
+    try:
+        cursor.executemany('''
+            INSERT OR REPLACE INTO price_data
+            (product_name, price, date, market, source)
+            VALUES (?, ?, ?, ?, ?)
+        ''', rows)
+        conn.commit()
+        saved = len(rows)
+    except Exception as e:
+        print(f"[ERROR] batch insert 실패: {e}")
+        saved = 0
+
     conn.close()
     return saved
 
