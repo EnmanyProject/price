@@ -46,7 +46,7 @@ _DATA_INITIALIZED = False
 
 def ensure_data():
     """
-    데이터가 없으면 샘플 데이터로 빠르게 초기화 (Vercel 타임아웃 방지)
+    데이터가 없거나 가상 기준일과 어긋나면 샘플 데이터를 재생성
     - 컨테이너 단위 1회만 실행 (글로벌 플래그)
     - 모든 품목 데이터를 한 번에 모아 batch insert
     """
@@ -55,9 +55,26 @@ def ensure_data():
         return
 
     try:
+        from config import get_today
         init_db()
         latest = get_latest_prices()
-        if not latest:
+
+        # 기준일 변경(MOCK_TODAY 도입)으로 옛 데이터가 어긋날 수 있음 → 재생성 판단
+        today_str = get_today().strftime('%Y-%m-%d')
+        needs_rebuild = not latest
+        if latest:
+            # 최신 가격의 날짜가 가상 기준일과 다르면 옛 데이터로 판단
+            latest_date = max(p.get('date', '') for p in latest)
+            if latest_date != today_str:
+                needs_rebuild = True
+                # 옛 데이터 비우기
+                from database import get_db
+                conn = get_db()
+                conn.execute('DELETE FROM price_data')
+                conn.commit()
+                conn.close()
+
+        if needs_rebuild:
             # 11품목 × 365일 = 4,015건을 한 번의 executemany로 처리
             all_data = []
             for product_name in PRODUCT_CODES.keys():
@@ -263,3 +280,17 @@ def api_garak_today():
 def api_health():
     """헬스체크"""
     return jsonify({'status': 'ok', 'python': sys.version})
+
+
+@app.route('/api/today', methods=['GET'])
+def api_today():
+    """앱 전역 기준일 — 데모용 가상 날짜"""
+    from config import get_today
+    today = get_today()
+    return jsonify({
+        'date': today.strftime('%Y-%m-%d'),
+        'datetime': today.strftime('%Y-%m-%d %H:%M'),
+        'year': today.year,
+        'month': today.month,
+        'day': today.day,
+    })

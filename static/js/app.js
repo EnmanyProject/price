@@ -500,15 +500,26 @@ function refreshData() {
     });
 }
 
-// ===== 최종 업데이트 시간 =====
+// ===== 최종 업데이트 시간 — 서버의 가상 기준일 사용 =====
 function updateLastUpdateTime() {
-    var now = new Date();
-    var dateStr = now.getFullYear() + '-' +
-        padZero(now.getMonth() + 1) + '-' +
-        padZero(now.getDate()) + ' ' +
-        padZero(now.getHours()) + ':' +
-        padZero(now.getMinutes());
-    $('#lastUpdate').text(dateStr);
+    $.ajax({
+        url: '/api/today',
+        method: 'GET',
+        dataType: 'json',
+        success: function(data) {
+            $('#lastUpdate').text(data.datetime || data.date || '-');
+        },
+        error: function() {
+            // 폴백: 클라이언트 현재 시간
+            var now = new Date();
+            var dateStr = now.getFullYear() + '-' +
+                padZero(now.getMonth() + 1) + '-' +
+                padZero(now.getDate()) + ' ' +
+                padZero(now.getHours()) + ':' +
+                padZero(now.getMinutes());
+            $('#lastUpdate').text(dateStr);
+        }
+    });
 }
 
 // ===== 데이터 소스 정보 =====

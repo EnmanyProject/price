@@ -21,6 +21,7 @@ from config import (
     KAMIS_API_URL, KAMIS_CERT_KEY, KAMIS_CERT_ID,
     GARAK_BASE_URL, GARAK_PRODUCT_MAP,
     PRODUCT_CODES, COUNTRY_CODES,
+    get_today,
 )
 
 try:
@@ -428,8 +429,9 @@ def generate_sample_data(product_name, days=730):
     pattern = seasonal_patterns.get(product_name, [1.0] * 12)
 
     # 경량화: random.gauss 대신 uniform 사용 (Vercel cold start 최적화)
+    # 종료일은 가상 기준일 (config.MOCK_TODAY) — 가격 값은 오늘 시점 알고리즘 그대로
     data = []
-    end_date = datetime.now()
+    end_date = get_today()
     start_date = end_date - timedelta(days=days)
 
     prev_price = base_price
@@ -610,11 +612,11 @@ def collect_all_data():
 
 
 def get_price_history(product_name, days=365):
-    """특정 품목의 가격 이력 조회"""
+    """특정 품목의 가격 이력 조회 (가상 기준일 기준)"""
     conn = get_db()
     cursor = conn.cursor()
 
-    start_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+    start_date = (get_today() - timedelta(days=days)).strftime('%Y-%m-%d')
     cursor.execute('''
         SELECT date, price, market, source
         FROM price_data

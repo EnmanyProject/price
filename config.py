@@ -1,6 +1,17 @@
 import os
+from datetime import datetime
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
+# 데모용 가상 기준일 — 실제 오늘 대신 이 날짜를 "오늘"로 취급
+# 데이터 생성, 차트 x축, 통계 모두 이 시점 기준
+MOCK_TODAY = datetime(2022, 5, 21)
+USE_MOCK_DATE = True
+
+
+def get_today():
+    """앱 전역 기준일 (실제 오늘 또는 데모용 가상 날짜)"""
+    return MOCK_TODAY if USE_MOCK_DATE else datetime.now()
 
 # KAMIS API 설정
 # 인증키 발급: https://www.kamis.or.kr/customer/reference/openapi_write.do
