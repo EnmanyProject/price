@@ -628,19 +628,23 @@ def get_price_history(product_name, days=365):
 
 
 def get_latest_prices():
-    """모든 품목의 최신 가격 조회"""
+    """
+    모든 품목의 최신 가격 조회
+    같은 날짜에 여러 market/source가 있어도 품목당 1개 row만 반환 (DISTINCT 보장)
+    """
     conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT p1.product_name, p1.price, p1.date, p1.market, p1.source
-        FROM price_data p1
-        INNER JOIN (
-            SELECT product_name, MAX(date) as max_date
+        SELECT product_name, price, date, market, source
+        FROM price_data
+        WHERE (product_name, date) IN (
+            SELECT product_name, MAX(date)
             FROM price_data
             GROUP BY product_name
-        ) p2 ON p1.product_name = p2.product_name AND p1.date = p2.max_date
-        ORDER BY p1.product_name
+        )
+        GROUP BY product_name
+        ORDER BY product_name
     ''')
 
     rows = cursor.fetchall()

@@ -10,6 +10,7 @@ var currentHistoryDays = 90;
 
 // ===== 초기화 =====
 $(document).ready(function() {
+    console.log('[INIT] 페이지 로드 시작');
     loadProducts();
     updateLastUpdateTime();
     loadDataSourceInfo();
@@ -20,13 +21,26 @@ function loadProducts() {
     $.ajax({
         url: '/api/products',
         method: 'GET',
+        dataType: 'json',
         success: function(data) {
-            renderProductGrid(data.products);
+            console.log('[/api/products] 응답:', data);
+            if (data && data.products && data.products.length > 0) {
+                console.log('[/api/products] 첫 품목:', data.products[0]);
+                renderProductGrid(data.products);
+            } else {
+                $('#productGrid').html(
+                    '<div class="col-12 text-center text-warning">' +
+                    '<i class="fas fa-exclamation-circle"></i> 품목 데이터가 비어 있습니다. (응답: ' +
+                    JSON.stringify(data).substring(0, 200) + ')</div>'
+                );
+            }
         },
-        error: function() {
+        error: function(xhr, status, err) {
+            console.error('[/api/products] 실패:', status, err, xhr.responseText);
             $('#productGrid').html(
                 '<div class="col-12 text-center text-danger">' +
-                '<i class="fas fa-exclamation-triangle"></i> 데이터를 불러올 수 없습니다.' +
+                '<i class="fas fa-exclamation-triangle"></i> 데이터를 불러올 수 없습니다.<br>' +
+                '<small>' + (xhr.responseText || err).substring(0, 300) + '</small>' +
                 '</div>'
             );
         }
@@ -138,10 +152,21 @@ function loadPriceHistory(productName, days) {
     $.ajax({
         url: '/api/history/' + encodeURIComponent(productName) + '?days=' + days,
         method: 'GET',
+        dataType: 'json',
         success: function(data) {
-            if (data.success) {
+            console.log('[/api/history] 응답:', data);
+            if (data.success && data.history && data.history.length > 0) {
                 renderPriceChart(productName, data.history);
+            } else {
+                console.warn('[/api/history] 데이터 없음', data);
+                if (priceChart) { priceChart.destroy(); priceChart = null; }
+                var $canvas = $('#priceChart');
+                $canvas.replaceWith('<canvas id="priceChart" height="120"></canvas>');
+                $('#chartTitle').text(productName + ' — 데이터 없음');
             }
+        },
+        error: function(xhr, status, err) {
+            console.error('[/api/history] 실패:', status, err, xhr.responseText);
         }
     });
 }
@@ -545,8 +570,11 @@ function renderSourceInfo(info) {
 
 // ===== 유틸리티 =====
 function numberFormat(num) {
-    if (num === null || num === undefined) return '-';
-    return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    // null, undefined, 빈 문자열, NaN, 비정상 값 모두 '-'로 처리
+    if (num === null || num === undefined || num === '') return '-';
+    var n = Number(num);
+    if (isNaN(n) || !isFinite(n)) return '-';
+    return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 function padZero(n) {

@@ -109,8 +109,16 @@ def api_products():
 
     products = []
     for name, info in PRODUCT_CODES.items():
-        price_data = price_map.get(name, {})
+        price_data = price_map.get(name) or {}
         stats = get_price_statistics(name, days=7)
+
+        # price가 None/0이면 통계의 current_price로 폴백
+        price_value = price_data.get('price')
+        if price_value is None or price_value == 0:
+            if stats and stats.get('current_price'):
+                price_value = stats['current_price']
+            else:
+                price_value = 0
 
         products.append({
             'name': name,
@@ -118,13 +126,53 @@ def api_products():
             'category': info['category'],
             'unit': info['unit'],
             'icon': info['icon'],
-            'price': price_data.get('price', 0),
+            'price': float(price_value) if price_value is not None else 0,
             'date': price_data.get('date', '-'),
-            'daily_change': stats['daily_change'] if stats else 0,
-            'daily_change_pct': stats['daily_change_pct'] if stats else 0,
+            'daily_change': float(stats['daily_change']) if stats else 0,
+            'daily_change_pct': float(stats['daily_change_pct']) if stats else 0,
         })
 
-    return jsonify({'success': True, 'products': products})
+    return jsonify({
+        'success': True,
+        'products': products,
+        'debug': {
+            'latest_count': len(latest_prices),
+            'product_count': len(products),
+            'initialized': _DATA_INITIALIZED,
+        },
+    })
+
+
+@app.route('/api/debug', methods=['GET'])
+def api_debug():
+    """진단용 엔드포인트 — DB 상태와 가격 데이터 표본 반환"""
+    try:
+        ensure_data()
+        latest = get_latest_prices()
+        info = get_data_source_info()
+
+        # 첫 품목 가격 이력 표본
+        sample_history = []
+        if PRODUCT_CODES:
+            first_product = list(PRODUCT_CODES.keys())[0]
+            history = get_price_history(first_product, days=7)
+            sample_history = history[:5]
+
+        return jsonify({
+            'initialized': _DATA_INITIALIZED,
+            'db_path': config.DATABASE_PATH,
+            'latest_prices_count': len(latest),
+            'latest_prices_sample': latest[:3],
+            'source_info': info,
+            'sample_history_product': list(PRODUCT_CODES.keys())[0] if PRODUCT_CODES else None,
+            'sample_history': sample_history,
+        })
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'type': type(e).__name__,
+            'traceback': traceback.format_exc(),
+        }), 500
 
 
 @app.route('/api/history/<product_name>', methods=['GET'])
