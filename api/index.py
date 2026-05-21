@@ -7,6 +7,7 @@ Flask 앱을 Vercel에서 구동
 import sys
 import os
 import traceback
+from urllib.parse import unquote
 
 # 프로젝트 루트를 path에 추가
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -175,8 +176,10 @@ def api_debug():
         }), 500
 
 
-@app.route('/api/history/<product_name>', methods=['GET'])
+@app.route('/api/history/<path:product_name>', methods=['GET'])
 def api_history(product_name):
+    # Vercel @vercel/python builder가 URL 인코딩을 자동 디코드하지 않으므로 직접 unquote
+    product_name = unquote(product_name)
     ensure_data()
     days = request.args.get('days', 90, type=int)
     history = get_price_history(product_name, days)
@@ -188,8 +191,9 @@ def api_history(product_name):
     })
 
 
-@app.route('/api/statistics/<product_name>', methods=['GET'])
+@app.route('/api/statistics/<path:product_name>', methods=['GET'])
 def api_statistics(product_name):
+    product_name = unquote(product_name)
     ensure_data()
     days = request.args.get('days', 365, type=int)
     stats = get_price_statistics(product_name, days)
