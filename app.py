@@ -170,6 +170,41 @@ def api_garak_today():
     })
 
 
+# ===== 데이터수집및관리 터미널 (백오피스) =====
+@app.route('/datatool')
+def datatool():
+    """데이터 수집·관리 관제 터미널 페이지"""
+    return render_template('datatool.html')
+
+
+@app.route('/api/datatool/sources', methods=['GET'])
+def api_datatool_sources():
+    """소스별 상태·건수·지연 현황"""
+    from datatool import get_sources_status
+    return jsonify(get_sources_status())
+
+
+@app.route('/api/datatool/inventory', methods=['GET'])
+def api_datatool_inventory():
+    """품목 × 소스 건수 매트릭스"""
+    from datatool import get_inventory
+    return jsonify(get_inventory())
+
+
+@app.route('/api/datatool/stats', methods=['GET'])
+def api_datatool_stats():
+    """총계·일별 수집량·품질 지표"""
+    from datatool import get_stats
+    return jsonify(get_stats())
+
+
+@app.route('/api/datatool/collect', methods=['POST'])
+def api_datatool_collect():
+    """수집 트리거 — 콘솔 로그 라인 반환"""
+    from datatool import run_collect
+    return jsonify(run_collect())
+
+
 # ===== 메인 =====
 if __name__ == '__main__':
     initialize()

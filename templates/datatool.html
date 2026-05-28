@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARROT · DATA ACQUISITION TERMINAL</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/css/datatool.css">
+</head>
+<body>
+<div class="scanlines" aria-hidden="true"></div>
+
+<div class="terminal">
+
+    <!-- ===== 헤더 ===== -->
+    <header class="t-header">
+        <div class="t-brand">
+            <span class="t-logo">◣◢</span>
+            <div class="t-title">
+                <strong>CARROT</strong>
+                <span class="t-subtitle">DATA ACQUISITION TERMINAL</span>
+            </div>
+            <span class="t-ver">v1.4.2</span>
+        </div>
+        <div class="t-meta">
+            <div class="t-meta-item">
+                <span class="t-meta-label">SESSION</span>
+                <span class="t-meta-val" id="sessionId">—</span>
+            </div>
+            <div class="t-meta-item">
+                <span class="t-meta-label">BASIS DATE</span>
+                <span class="t-meta-val" id="basisDate">—</span>
+            </div>
+            <div class="t-meta-item t-clock">
+                <span class="t-meta-label">SYS CLOCK</span>
+                <span class="t-meta-val" id="sysClock">--:--:--</span>
+            </div>
+            <div class="t-meta-item">
+                <span class="t-status-dot live"></span>
+                <span class="t-meta-val" id="opState">OPERATIONAL</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== 본문 그리드 ===== -->
+    <main class="t-grid">
+
+        <!-- [A] SOURCES -->
+        <section class="panel panel-sources">
+            <div class="panel-head">
+                <h2><span class="panel-tag">A</span> ACQUISITION SOURCES</h2>
+                <span class="panel-aux" id="sourcesAux">— / —  UP</span>
+            </div>
+            <div class="panel-body">
+                <div class="src-head">
+                    <span class="c-led"></span>
+                    <span class="c-name">SOURCE</span>
+                    <span class="c-proto">PROTOCOL</span>
+                    <span class="c-lat">LAT</span>
+                    <span class="c-rows">ROWS</span>
+                </div>
+                <ul class="src-list" id="srcList">
+                    <li class="src-empty">connecting…</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- [B] LIVE CONSOLE -->
+        <section class="panel panel-console">
+            <div class="panel-head">
+                <h2><span class="panel-tag">B</span> LIVE ACQUISITION CONSOLE</h2>
+                <button class="run-btn" id="runCollect" title="수집 파이프라인 실행 (R)">
+                    <span class="run-ico">▶</span> RUN COLLECT
+                </button>
+            </div>
+            <div class="panel-body">
+                <div class="console" id="console">
+                    <div class="con-line con-info">[boot] carrot acquisition daemon ready.</div>
+                    <div class="con-line con-dim">[boot] type RUN COLLECT or press &lt;R&gt; to begin.</div>
+                </div>
+                <div class="console-foot">
+                    <span class="con-prompt">carrot@acq</span>
+                    <span class="con-cursor" id="conCursor">▋</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- [C] INVENTORY MATRIX -->
+        <section class="panel panel-inventory">
+            <div class="panel-head">
+                <h2><span class="panel-tag">C</span> INVENTORY MATRIX <span class="panel-sub">품목 × 소스</span></h2>
+                <span class="panel-aux" id="invAux">— rows</span>
+            </div>
+            <div class="panel-body no-pad">
+                <div class="inv-scroll">
+                    <table class="inv-table" id="invTable">
+                        <thead id="invHead"></thead>
+                        <tbody id="invBody">
+                            <tr><td class="inv-empty">loading matrix…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- [D] QUALITY / THROUGHPUT -->
+        <section class="panel panel-stats">
+            <div class="panel-head">
+                <h2><span class="panel-tag">D</span> QUALITY · THROUGHPUT</h2>
+                <span class="panel-aux" id="statsAux">as of —</span>
+            </div>
+            <div class="panel-body">
+                <div class="stat-counter">
+                    <span class="stat-counter-label">TOTAL RECORDS INGESTED</span>
+                    <span class="stat-counter-val" id="totalRows">0</span>
+                    <span class="stat-counter-sub" id="rowsBreakdown">real — · ext —</span>
+                </div>
+
+                <div class="gauges">
+                    <div class="gauge">
+                        <div class="gauge-bar"><i id="gCoverage"></i></div>
+                        <div class="gauge-meta"><span>COVERAGE</span><b id="vCoverage">—</b></div>
+                    </div>
+                    <div class="gauge">
+                        <div class="gauge-bar"><i id="gComplete"></i></div>
+                        <div class="gauge-meta"><span>COMPLETENESS</span><b id="vComplete">—</b></div>
+                    </div>
+                    <div class="gauge">
+                        <div class="gauge-meta wide"><span>FRESHNESS</span><b id="vFresh">—</b></div>
+                        <div class="gauge-meta wide"><span>PRODUCTS</span><b id="vProducts">—</b></div>
+                    </div>
+                </div>
+
+                <div class="chart-wrap">
+                    <div class="chart-title">DAILY THROUGHPUT · 30D</div>
+                    <div class="chart-box"><canvas id="dailyChart"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===== 상태바 ===== -->
+    <footer class="t-status">
+        <span class="st-item"><b id="stTotal">—</b> records</span>
+        <span class="st-sep">│</span>
+        <span class="st-item"><b id="stSources">—</b> sources</span>
+        <span class="st-sep">│</span>
+        <span class="st-item"><span class="st-led up"></span><b id="stUp">—</b> active</span>
+        <span class="st-sep">│</span>
+        <span class="st-item">uptime <b id="stUptime">00:00:00</b></span>
+        <span class="st-flex"></span>
+        <span class="st-item dim">CARROT-ACQ // 가락 · KAMIS · MAFRA · aT · KREI · KMA · KOSIS</span>
+        <span class="st-sep">│</span>
+        <span class="st-item"><a href="/" class="st-link">← 예측 서비스</a></span>
+    </footer>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+<script src="/static/js/datatool.js"></script>
+</body>
+</html>

@@ -276,6 +276,41 @@ def api_garak_today():
     })
 
 
+@app.route('/datatool')
+def datatool():
+    """데이터 수집·관리 관제 터미널 페이지"""
+    ensure_data()
+    return render_template('datatool.html')
+
+
+@app.route('/api/datatool/sources', methods=['GET'])
+def api_datatool_sources():
+    ensure_data()
+    from datatool import get_sources_status
+    return jsonify(get_sources_status())
+
+
+@app.route('/api/datatool/inventory', methods=['GET'])
+def api_datatool_inventory():
+    ensure_data()
+    from datatool import get_inventory
+    return jsonify(get_inventory())
+
+
+@app.route('/api/datatool/stats', methods=['GET'])
+def api_datatool_stats():
+    ensure_data()
+    from datatool import get_stats
+    return jsonify(get_stats())
+
+
+@app.route('/api/datatool/collect', methods=['POST'])
+def api_datatool_collect():
+    ensure_data()
+    from datatool import run_collect
+    return jsonify(run_collect())
+
+
 @app.route('/api/health', methods=['GET'])
 def api_health():
     """헬스체크"""
