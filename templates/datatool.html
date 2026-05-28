@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CARROT · DATA ACQUISITION TERMINAL</title>
+    <title>데이터 관리툴</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="/static/css/datatool.css">
 </head>
@@ -19,29 +19,27 @@
     <!-- ===== 헤더 ===== -->
     <header class="t-header">
         <div class="t-brand">
-            <span class="t-logo">◣◢</span>
             <div class="t-title">
-                <strong>CARROT</strong>
-                <span class="t-subtitle">DATA ACQUISITION TERMINAL</span>
+                <strong>데이터 관리툴</strong>
             </div>
             <span class="t-ver">v1.4.2</span>
         </div>
         <div class="t-meta">
             <div class="t-meta-item">
-                <span class="t-meta-label">SESSION</span>
+                <span class="t-meta-label">세션</span>
                 <span class="t-meta-val" id="sessionId">—</span>
             </div>
             <div class="t-meta-item">
-                <span class="t-meta-label">BASIS DATE</span>
+                <span class="t-meta-label">기준일</span>
                 <span class="t-meta-val" id="basisDate">—</span>
             </div>
             <div class="t-meta-item t-clock">
-                <span class="t-meta-label">SYS CLOCK</span>
+                <span class="t-meta-label">시스템 시각</span>
                 <span class="t-meta-val" id="sysClock">--:--:--</span>
             </div>
             <div class="t-meta-item">
                 <span class="t-status-dot live"></span>
-                <span class="t-meta-val" id="opState">OPERATIONAL</span>
+                <span class="t-meta-val" id="opState">정상 가동</span>
             </div>
         </div>
     </header>
@@ -49,38 +47,38 @@
     <!-- ===== 본문 그리드 ===== -->
     <main class="t-grid">
 
-        <!-- [A] SOURCES -->
+        <!-- [A] 수집 소스 -->
         <section class="panel panel-sources">
             <div class="panel-head">
-                <h2><span class="panel-tag">A</span> ACQUISITION SOURCES</h2>
-                <span class="panel-aux" id="sourcesAux">— / —  UP</span>
+                <h2><span class="panel-tag">A</span> 수집 소스</h2>
+                <span class="panel-aux" id="sourcesAux">— / — 가동</span>
             </div>
             <div class="panel-body">
                 <div class="src-head">
                     <span class="c-led"></span>
-                    <span class="c-name">SOURCE</span>
-                    <span class="c-proto">PROTOCOL</span>
-                    <span class="c-lat">LAT</span>
-                    <span class="c-rows">ROWS</span>
+                    <span class="c-name">소스</span>
+                    <span class="c-proto">프로토콜</span>
+                    <span class="c-lat">지연</span>
+                    <span class="c-rows">건수</span>
                 </div>
                 <ul class="src-list" id="srcList">
-                    <li class="src-empty">connecting…</li>
+                    <li class="src-empty">연결 중…</li>
                 </ul>
             </div>
         </section>
 
-        <!-- [B] LIVE CONSOLE -->
+        <!-- [B] 실시간 수집 콘솔 -->
         <section class="panel panel-console">
             <div class="panel-head">
-                <h2><span class="panel-tag">B</span> LIVE ACQUISITION CONSOLE</h2>
+                <h2><span class="panel-tag">B</span> 실시간 수집 콘솔</h2>
                 <button class="run-btn" id="runCollect" title="수집 파이프라인 실행 (R)">
-                    <span class="run-ico">▶</span> RUN COLLECT
+                    <span class="run-ico">▶</span> 수집 실행
                 </button>
             </div>
             <div class="panel-body">
                 <div class="console" id="console">
-                    <div class="con-line con-info">[boot] carrot acquisition daemon ready.</div>
-                    <div class="con-line con-dim">[boot] type RUN COLLECT or press &lt;R&gt; to begin.</div>
+                    <div class="con-line con-info">[부팅] 수집 데몬 준비 완료.</div>
+                    <div class="con-line con-dim">[부팅] '수집 실행' 버튼 또는 &lt;R&gt; 키로 시작하세요.</div>
                 </div>
                 <div class="console-foot">
                     <span class="con-prompt">carrot@acq</span>
@@ -89,54 +87,54 @@
             </div>
         </section>
 
-        <!-- [C] INVENTORY MATRIX -->
+        <!-- [C] 데이터 인벤토리 -->
         <section class="panel panel-inventory">
             <div class="panel-head">
-                <h2><span class="panel-tag">C</span> INVENTORY MATRIX <span class="panel-sub">품목 × 소스</span></h2>
-                <span class="panel-aux" id="invAux">— rows</span>
+                <h2><span class="panel-tag">C</span> 데이터 인벤토리 <span class="panel-sub">품목 × 소스</span></h2>
+                <span class="panel-aux" id="invAux">— 건</span>
             </div>
             <div class="panel-body no-pad">
                 <div class="inv-scroll">
                     <table class="inv-table" id="invTable">
                         <thead id="invHead"></thead>
                         <tbody id="invBody">
-                            <tr><td class="inv-empty">loading matrix…</td></tr>
+                            <tr><td class="inv-empty">매트릭스 불러오는 중…</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- [D] QUALITY / THROUGHPUT -->
+        <!-- [D] 품질 · 처리량 -->
         <section class="panel panel-stats">
             <div class="panel-head">
-                <h2><span class="panel-tag">D</span> QUALITY · THROUGHPUT</h2>
-                <span class="panel-aux" id="statsAux">as of —</span>
+                <h2><span class="panel-tag">D</span> 품질 · 처리량</h2>
+                <span class="panel-aux" id="statsAux">기준 —</span>
             </div>
             <div class="panel-body">
                 <div class="stat-counter">
-                    <span class="stat-counter-label">TOTAL RECORDS INGESTED</span>
+                    <span class="stat-counter-label">총 수집 레코드</span>
                     <span class="stat-counter-val" id="totalRows">0</span>
-                    <span class="stat-counter-sub" id="rowsBreakdown">real — · ext —</span>
+                    <span class="stat-counter-sub" id="rowsBreakdown">실시간 — · 확장 —</span>
                 </div>
 
                 <div class="gauges">
                     <div class="gauge">
                         <div class="gauge-bar"><i id="gCoverage"></i></div>
-                        <div class="gauge-meta"><span>COVERAGE</span><b id="vCoverage">—</b></div>
+                        <div class="gauge-meta"><span>커버리지</span><b id="vCoverage">—</b></div>
                     </div>
                     <div class="gauge">
                         <div class="gauge-bar"><i id="gComplete"></i></div>
-                        <div class="gauge-meta"><span>COMPLETENESS</span><b id="vComplete">—</b></div>
+                        <div class="gauge-meta"><span>완전성</span><b id="vComplete">—</b></div>
                     </div>
                     <div class="gauge">
-                        <div class="gauge-meta wide"><span>FRESHNESS</span><b id="vFresh">—</b></div>
-                        <div class="gauge-meta wide"><span>PRODUCTS</span><b id="vProducts">—</b></div>
+                        <div class="gauge-meta wide"><span>신선도</span><b id="vFresh">—</b></div>
+                        <div class="gauge-meta wide"><span>품목 수</span><b id="vProducts">—</b></div>
                     </div>
                 </div>
 
                 <div class="chart-wrap">
-                    <div class="chart-title">DAILY THROUGHPUT · 30D</div>
+                    <div class="chart-title">일별 처리량 · 30일</div>
                     <div class="chart-box"><canvas id="dailyChart"></canvas></div>
                 </div>
             </div>
@@ -146,15 +144,15 @@
 
     <!-- ===== 상태바 ===== -->
     <footer class="t-status">
-        <span class="st-item"><b id="stTotal">—</b> records</span>
+        <span class="st-item"><b id="stTotal">—</b> 건</span>
         <span class="st-sep">│</span>
-        <span class="st-item"><b id="stSources">—</b> sources</span>
+        <span class="st-item"><b id="stSources">—</b> 소스</span>
         <span class="st-sep">│</span>
-        <span class="st-item"><span class="st-led up"></span><b id="stUp">—</b> active</span>
+        <span class="st-item"><span class="st-led up"></span><b id="stUp">—</b> 가동</span>
         <span class="st-sep">│</span>
-        <span class="st-item">uptime <b id="stUptime">00:00:00</b></span>
+        <span class="st-item">가동시간 <b id="stUptime">00:00:00</b></span>
         <span class="st-flex"></span>
-        <span class="st-item dim">CARROT-ACQ // 가락 · KAMIS · MAFRA · aT · KREI · KMA · KOSIS</span>
+        <span class="st-item dim">데이터 관리툴 // 가락 · KAMIS · 농림부 · aT · KREI · 기상청 · 통계청</span>
         <span class="st-sep">│</span>
         <span class="st-item"><a href="/" class="st-link">← 예측 서비스</a></span>
     </footer>

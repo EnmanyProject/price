@@ -376,7 +376,7 @@ def run_collect():
 
     lines = []
     lines.append({'lvl': 'cmd',  'text': f'$ carrot-collect --source=all --date={today_str}'})
-    lines.append({'lvl': 'info', 'text': f'[{t}] INIT   acquisition pipeline  pid={now.microsecond % 9000 + 1000}'})
+    lines.append({'lvl': 'info', 'text': f'[{t}] 초기화  수집 파이프라인 기동  pid={now.microsecond % 9000 + 1000}'})
 
     grand = 0
     for meta in SOURCE_REGISTRY:
@@ -384,20 +384,20 @@ def run_collect():
         if meta['kind'] == 'live':
             rows = real.get(code, {}).get('cnt', 0)
             if code == 'KAMIS' and rows == 0:
-                lines.append({'lvl': 'warn', 'text': f'[{t}] {code:<6} SKIP  no API credentials — set KAMIS_CERT_KEY'})
+                lines.append({'lvl': 'warn', 'text': f'[{t}] {code:<6} 건너뜀  API 인증키 없음 — KAMIS_CERT_KEY 설정 필요'})
                 continue
             if code == 'GARAK' and rows == 0:
-                lines.append({'lvl': 'warn', 'text': f'[{t}] {code:<6} fallback → SAMPLE (source unreachable)'})
+                lines.append({'lvl': 'warn', 'text': f'[{t}] {code:<6} 대체    SAMPLE로 폴백 (소스 응답 없음)'})
                 continue
             lat = _demo_latency('KMA', now) if code == 'GARAK' else 2
-            lines.append({'lvl': 'ok', 'text': f'[{t}] {code:<6} 200 OK  committed {rows:,} rows  ({lat}ms)'})
+            lines.append({'lvl': 'ok', 'text': f'[{t}] {code:<6} 응답 OK  {rows:,}건 적재  ({lat}ms)'})
         else:
             rows = _demo_source_rows(code, now)
             lat = _demo_latency(code, now)
-            lines.append({'lvl': 'ok', 'text': f'[{t}] {code:<6} sync OK  {rows:,} rows  ({lat}ms · {meta["protocol"]})'})
+            lines.append({'lvl': 'ok', 'text': f'[{t}] {code:<6} 동기화  {rows:,}건  ({lat}ms · {meta["protocol"]})'})
         grand += rows
 
-    lines.append({'lvl': 'info', 'text': f'[{t}] MERGE  dedup + interpolate missing ...'})
-    lines.append({'lvl': 'done', 'text': f'[{t}] DONE   total {grand:,} rows across {len(SOURCE_REGISTRY)} sources'})
+    lines.append({'lvl': 'info', 'text': f'[{t}] 병합    중복 제거 + 결측 보간 …'})
+    lines.append({'lvl': 'done', 'text': f'[{t}] 완료    {len(SOURCE_REGISTRY)}개 소스 전체 {grand:,}건'})
 
     return {'lines': lines, 'total_rows': grand, 'as_of': t}

@@ -7,6 +7,7 @@
     'use strict';
 
     var SOURCE_LABEL = {}; // code → 표시명 (인벤토리 헤더용)
+    var STATUS_KO = { UP: '가동', OK: '완료', SYNC: '수집중', IDLE: '대기', STBY: '준비', OFF: '중지' };
     var basisDate = '2022-05-21';
     var bootTs = Date.now();
     var dailyChart = null;
@@ -87,7 +88,7 @@
                     '<span class="c-led ' + sc + '"></span>' +
                     '<span class="c-name">' +
                         '<span class="nm"><span class="code">' + s.code + '</span>' + s.name + '</span>' +
-                        '<span class="sub"><span class="st ' + sc + '">' + s.status + '</span>' +
+                        '<span class="sub"><span class="st ' + sc + '">' + (STATUS_KO[s.status] || s.status) + '</span>' +
                             '<span>' + (s.region || '') + '</span></span>' +
                     '</span>' +
                     '<span class="c-proto">' + s.protocol + '</span>' +
@@ -98,7 +99,7 @@
         });
         list.innerHTML = html;
 
-        $('sourcesAux').textContent = data.summary.up + ' / ' + data.summary.total + '  UP';
+        $('sourcesAux').textContent = data.summary.up + ' / ' + data.summary.total + ' 가동';
         $('stSources').textContent = data.summary.total;
         $('stUp').textContent = data.summary.up;
         $('basisDate').textContent = data.summary.date;
@@ -111,14 +112,14 @@
     function renderInventory(data) {
         var codes = data.sources;
 
-        var thead = '<tr><th class="col-prod">PRODUCT</th>';
+        var thead = '<tr><th class="col-prod">품목</th>';
         codes.forEach(function (c) {
             thead += '<th class="' + (c.kind === 'demo' ? 'is-demo' : '') + '">' +
                         '<span class="code">' + c.code + '</span>' +
-                        '<span class="kind">' + (c.kind === 'demo' ? 'ext' : 'live') + '</span>' +
+                        '<span class="kind">' + (c.kind === 'demo' ? '확장' : '실시간') + '</span>' +
                      '</th>';
         });
-        thead += '<th class="col-tot">TOTAL</th></tr>';
+        thead += '<th class="col-tot">합계</th></tr>';
         $('invHead').innerHTML = thead;
 
         var body = '';
@@ -128,7 +129,6 @@
             var chgArrow = chg > 0 ? '▲' : (chg < 0 ? '▼' : '·');
             body += '<tr>';
             body += '<td class="col-prod">' +
-                        (r.icon ? '<img class="p-ico" src="' + r.icon + '" alt="">' : '') +
                         r.product +
                         '<span class="p-price">' + fmt(r.price) + '원</span>' +
                         '<span class="chg ' + chgCls + '">' + chgArrow + Math.abs(chg).toFixed(1) + '%</span>' +
@@ -143,14 +143,14 @@
         });
 
         // 합계 행
-        body += '<tr class="inv-foot"><td class="col-prod">Σ TOTAL</td>';
+        body += '<tr class="inv-foot"><td class="col-prod">Σ 총계</td>';
         codes.forEach(function (c) {
             body += '<td>' + fmt(data.col_totals[c.code] || 0) + '</td>';
         });
         body += '<td>' + fmt(data.grand_total) + '</td></tr>';
 
         $('invBody').innerHTML = body;
-        $('invAux').textContent = fmt(data.grand_total) + ' rows';
+        $('invAux').textContent = fmt(data.grand_total) + ' 건';
     }
 
     // ============================================================
@@ -158,16 +158,16 @@
     // ============================================================
     function renderStats(data) {
         setCounterTarget(data.total_rows);
-        $('rowsBreakdown').textContent = 'live ' + fmt(data.real_rows) + ' · ext ' + fmt(data.demo_rows);
+        $('rowsBreakdown').textContent = '실시간 ' + fmt(data.real_rows) + ' · 확장 ' + fmt(data.demo_rows);
         $('stTotal').textContent = fmt(data.total_rows);
-        $('statsAux').textContent = 'as of ' + data.as_of;
+        $('statsAux').textContent = '기준 ' + data.as_of;
 
         var q = data.quality;
         $('gCoverage').style.width = q.coverage_pct + '%';
         $('vCoverage').textContent = q.coverage_pct + '%';
         $('gComplete').style.width = q.completeness_pct + '%';
         $('vComplete').textContent = q.completeness_pct + '%';
-        $('vFresh').textContent = q.freshness_days === 0 ? 'live' : (q.freshness_days + 'd');
+        $('vFresh').textContent = q.freshness_days === 0 ? '실시간' : (q.freshness_days + '일');
         $('vProducts').textContent = data.products;
 
         renderDailyChart(data.daily);
@@ -232,7 +232,7 @@
                     bodyFontFamily: "'IBM Plex Mono', monospace",
                     bodyFontColor: '#f5a623', titleFontColor: '#6c7884',
                     callbacks: {
-                        label: function (item) { return fmt(item.yLabel) + ' rows'; }
+                        label: function (item) { return fmt(item.yLabel) + '건'; }
                     }
                 }
             }

@@ -90,7 +90,7 @@ body {
 .t-brand { display: flex; align-items: center; gap: 12px; }
 .t-logo { color: var(--amber); font-size: 16px; letter-spacing: -2px; text-shadow: 0 0 8px rgba(245,166,35,0.4); }
 .t-title { display: flex; align-items: baseline; gap: 9px; }
-.t-title strong { color: var(--amber); font-weight: 700; font-size: 15px; letter-spacing: 2px; }
+.t-title strong { font-family: var(--kr); color: var(--amber); font-weight: 700; font-size: 15px; letter-spacing: 1px; }
 .t-subtitle { color: var(--text-dim); font-size: 10.5px; letter-spacing: 3px; }
 .t-ver { color: var(--text-faint); font-size: 10px; border: 1px solid var(--border); padding: 1px 6px; border-radius: 2px; }
 
