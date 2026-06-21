@@ -1,4 +1,9 @@
 {
+    "functions": {
+        "api/index.py": {
+            "maxDuration": 60
+        }
+    },
     "rewrites": [
         {
             "source": "/",
@@ -21,8 +26,8 @@
             "has": [{"type": "host", "value": "www.arang.net"}]
         },
         {
-            "source": "/((?!static/|web/|api/).*)",
-            "destination": "/api/index.py"
+            "source": "/((?!static/|web/).*)",
+            "destination": "/api/index"
         }
     ],
     "crons": [
