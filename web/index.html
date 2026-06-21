@@ -211,6 +211,16 @@ header.scrolled .burger span{background:var(--pine)}
 .sv .n{font-size:34px;font-weight:800;color:var(--leaf-bright);letter-spacing:-.03em}
 .sv .l{font-size:14px;color:rgba(255,255,255,.78);margin-top:6px;line-height:1.5}
 
+/* insight (가격 인사이트) */
+.insight{background:var(--mint)}
+.insight-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:56px;align-items:center}
+.insight .lead{color:var(--muted);font-size:16.5px;margin-top:20px;line-height:1.8}
+.insight-stats{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.iv{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:26px 24px}
+.iv .n{font-family:var(--serif);font-size:30px;color:var(--pine);font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.iv .l{font-size:14px;color:var(--muted);margin-top:8px;line-height:1.55}
+.insight .btn{margin-top:28px}
+
 /* contact */
 .contact{background:var(--white)}
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px}
@@ -245,7 +255,7 @@ footer{background:#0e231b;color:rgba(255,255,255,.6);padding:48px 0 40px;font-si
   .menu a,header.scrolled .menu a{color:#fff;font-size:18px}
   .burger{display:block;z-index:100}
   .menu .nav-cta{color:#fff!important}
-  .greet-grid,.cold-head,.social-grid,.contact-grid,.client-cols,.safe-extra{grid-template-columns:1fr;gap:32px}
+  .greet-grid,.cold-head,.social-grid,.contact-grid,.client-cols,.safe-extra,.insight-grid{grid-template-columns:1fr;gap:32px}
   .facts,.sm-grid,.cert-grid,.cold-features,.proc{grid-template-columns:1fr}
   .sm-stats{grid-template-columns:1fr 1fr}
   .sv-stats{grid-template-columns:1fr 1fr}
@@ -569,6 +579,26 @@ footer{background:#0e231b;color:rgba(255,255,255,.6);padding:48px 0 40px;font-si
         <div class="sv"><div class="n">1,500만</div><div class="l">연간 기부 금액(원)</div></div>
         <div class="sv"><div class="n">100%</div><div class="l">투명 재무·노무 운영</div></div>
         <div class="sv"><div class="n">함께</div><div class="l">취약계층 고용 확대</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSIGHT (가격 예측 서비스) -->
+<section class="insight" id="insight">
+  <div class="wrap">
+    <div class="insight-grid">
+      <div class="reveal">
+        <span class="eyebrow">기술 인프라</span>
+        <h2 class="section-title">데이터로 보는<br>농산물 시세</h2>
+        <p class="lead">27년 유통 경험에 데이터를 더했습니다. 가락·구리 도매시장, 기상청 ASOS, 공공 통계를 매일 자동 수집해 11개 주요 농산물의 가격을 단기 예측합니다. 영양교사·구매팀·소비자가 시세 변동을 한눈에 확인할 수 있도록 설계했습니다.</p>
+        <a href="https://price.arang.net" target="_blank" rel="noopener" class="btn btn-primary">가격 예측 서비스 보기 →</a>
+      </div>
+      <div class="insight-stats reveal">
+        <div class="iv"><div class="n">11품목</div><div class="l">배추·시금치·상추·고추·토마토·오이·무·대파·양파·감자·사과</div></div>
+        <div class="iv"><div class="n">매일 갱신</div><div class="l">새벽 KST 07:00 자동 수집·예측</div></div>
+        <div class="iv"><div class="n">2년치 학습</div><div class="l">계절·연중 가격 패턴 분석</div></div>
+        <div class="iv"><div class="n">+ 기상 보정</div><div class="l">기온·강수량 편차 반영</div></div>
       </div>
     </div>
   </div>
