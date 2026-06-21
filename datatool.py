@@ -382,7 +382,7 @@ def _run_collect_synthetic():
     t = now.strftime('%H:%M:%S')
 
     lines = []
-    lines.append({'lvl': 'cmd',  'text': f'$ carrot-collect --source=all --date={today_str} --mode=synthetic'})
+    lines.append({'lvl': 'cmd',  'text': f'$ price-collect --source=all --date={today_str} --mode=synthetic'})
     lines.append({'lvl': 'info', 'text': f'[{t}] 초기화  수집 파이프라인 기동  pid={now.microsecond % 9000 + 1000}'})
 
     grand = 0
@@ -417,7 +417,7 @@ def _run_collect_real():
     t = now.strftime('%H:%M:%S')
 
     lines = [
-        {'lvl': 'cmd',  'text': f'$ carrot-collect --source=all --mode=real'},
+        {'lvl': 'cmd',  'text': f'$ price-collect --source=all --mode=real'},
         {'lvl': 'info', 'text': f'[{t}] 실측 수집 시작 — 외부 소스 호출 …'},
     ]
 
