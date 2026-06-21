@@ -22,6 +22,23 @@ KAMIS_CERT_ID = os.environ.get('KAMIS_CERT_ID', '')
 # 가락시장 가격 정보 (키 불필요)
 GARAK_BASE_URL = "https://www.garakprice.com"
 
+# 기상청 ASOS 일별 자료 (공공데이터포털)
+# 인증키 발급: https://www.data.go.kr/ (기상청_지상(종관, ASOS) 일자료 조회서비스)
+KMA_API_URL = "http://apis.data.go.kr/1360000/AsosDalyInfoService/getWthrDataList"
+KMA_API_KEY = os.environ.get('KMA_API_KEY', '')
+
+# 농산물 주산지·소비지 관측소 (지역코드)
+KMA_STATIONS = {
+    '서울': '108',
+    '부산': '159',
+    '대구': '143',
+    '광주': '156',
+    '대전': '133',
+    '전주': '146',
+    '청주': '131',
+    '제주': '184',
+}
+
 # 농림축산식품부
 MAFRA_URL = "https://www.mafra.go.kr"
 

@@ -363,19 +363,26 @@ def get_stats():
     }
 
 
-def run_collect():
+def run_collect(mode='synthetic'):
     """
     수집 트리거 — 라이브 콘솔용 로그 라인 생성.
-    데모 안정성을 위해 무거운 실시간 스크래핑은 수행하지 않고,
-    현재 DB 상태를 바탕으로 실제 같은 수집 로그를 합성해 반환한다.
+
+    mode='synthetic' (기본): DB 상태 기반 합성 로그 — 데모 안정성 우선
+    mode='real': 진짜 외부 호출(collect_today) 실행 후 실측 로그 반환
     """
+    if mode == 'real':
+        return _run_collect_real()
+    return _run_collect_synthetic()
+
+
+def _run_collect_synthetic():
     now = _now()
     today_str = get_today().strftime('%Y-%m-%d')
     real = _real_source_counts()
     t = now.strftime('%H:%M:%S')
 
     lines = []
-    lines.append({'lvl': 'cmd',  'text': f'$ carrot-collect --source=all --date={today_str}'})
+    lines.append({'lvl': 'cmd',  'text': f'$ carrot-collect --source=all --date={today_str} --mode=synthetic'})
     lines.append({'lvl': 'info', 'text': f'[{t}] 초기화  수집 파이프라인 기동  pid={now.microsecond % 9000 + 1000}'})
 
     grand = 0
@@ -400,4 +407,39 @@ def run_collect():
     lines.append({'lvl': 'info', 'text': f'[{t}] 병합    중복 제거 + 결측 보간 …'})
     lines.append({'lvl': 'done', 'text': f'[{t}] 완료    {len(SOURCE_REGISTRY)}개 소스 전체 {grand:,}건'})
 
-    return {'lines': lines, 'total_rows': grand, 'as_of': t}
+    return {'lines': lines, 'total_rows': grand, 'as_of': t, 'mode': 'synthetic'}
+
+
+def _run_collect_real():
+    """진짜 외부 호출 — Vercel function timeout 60s 안에 끝나야 함"""
+    from data_collector import collect_today
+    now = _now()
+    t = now.strftime('%H:%M:%S')
+
+    lines = [
+        {'lvl': 'cmd',  'text': f'$ carrot-collect --source=all --mode=real'},
+        {'lvl': 'info', 'text': f'[{t}] 실측 수집 시작 — 외부 소스 호출 …'},
+    ]
+
+    try:
+        result = collect_today()
+    except Exception as e:
+        lines.append({'lvl': 'err', 'text': f'[{t}] 실패: {e}'})
+        return {'lines': lines, 'total_rows': 0, 'as_of': t, 'mode': 'real'}
+
+    t2 = _now().strftime('%H:%M:%S')
+    saved = result.get('saved', {})
+    total = result.get('total', 0)
+
+    for code in ('GARAK', 'KAMIS', 'KMA'):
+        n = saved.get(code, 0)
+        if n > 0:
+            lines.append({'lvl': 'ok', 'text': f'[{t2}] {code:<6} 응답 OK  {n:,}건 적재'})
+        else:
+            lines.append({'lvl': 'warn', 'text': f'[{t2}] {code:<6} 0건 — 키 미설정 또는 응답 없음'})
+
+    for err in result.get('errors', []):
+        lines.append({'lvl': 'err', 'text': f'[{t2}] {err}'})
+
+    lines.append({'lvl': 'done', 'text': f'[{t2}] 완료    실측 적재 {total:,}건'})
+    return {'lines': lines, 'total_rows': total, 'as_of': t2, 'mode': 'real'}

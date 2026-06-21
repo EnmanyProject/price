@@ -14,11 +14,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Flask, render_template, jsonify, request
 
-# Vercel은 /tmp만 쓰기 가능 → DB 경로를 먼저 오버라이드
+# Vercel은 /tmp만 쓰기 가능 → SQLite 폴백 시에만 경로 오버라이드
+# DATABASE_URL이 있으면 Postgres(Neon)로 영속, 폴백 경로는 무시됨
 import config
-config.DATABASE_PATH = '/tmp/prices.db'
-
-from database import init_db, get_db
+from database import init_db, get_db, IS_POSTGRES
+if not IS_POSTGRES:
+    config.DATABASE_PATH = '/tmp/prices.db'
 from data_collector import (
     collect_all_data,
     get_price_history,
@@ -46,36 +47,37 @@ _DATA_INITIALIZED = False
 
 def ensure_data():
     """
-    데이터가 없거나 가상 기준일과 어긋나면 샘플 데이터를 재생성
-    - 컨테이너 단위 1회만 실행 (글로벌 플래그)
-    - 모든 품목 데이터를 한 번에 모아 batch insert
+    스키마 보장 + (SQLite 폴백 시) 샘플 데이터 재생성
+    - Postgres(Neon): 영속 — 스키마만 보장, 데이터는 Cron이 적재
+    - SQLite(/tmp): cold start마다 휘발 — 가상 기준일에 맞춰 SAMPLE 재생성
     """
     global _DATA_INITIALIZED
     if _DATA_INITIALIZED:
         return
 
     try:
-        from config import get_today
         init_db()
-        latest = get_latest_prices()
 
-        # 기준일 변경(MOCK_TODAY 도입)으로 옛 데이터가 어긋날 수 있음 → 재생성 판단
+        if IS_POSTGRES:
+            # 영속 DB — 데이터 재생성 불필요. 비어있으면 Cron이 채울 때까지 빈 화면
+            _DATA_INITIALIZED = True
+            return
+
+        # 이하 SQLite 폴백 경로
+        from config import get_today
+        latest = get_latest_prices()
         today_str = get_today().strftime('%Y-%m-%d')
         needs_rebuild = not latest
         if latest:
-            # 최신 가격의 날짜가 가상 기준일과 다르면 옛 데이터로 판단
             latest_date = max(p.get('date', '') for p in latest)
             if latest_date != today_str:
                 needs_rebuild = True
-                # 옛 데이터 비우기
-                from database import get_db
                 conn = get_db()
-                conn.execute('DELETE FROM price_data')
+                conn.cursor().execute('DELETE FROM price_data')
                 conn.commit()
                 conn.close()
 
         if needs_rebuild:
-            # 11품목 × 365일 = 4,015건을 한 번의 executemany로 처리
             all_data = []
             for product_name in PRODUCT_CODES.keys():
                 all_data.extend(generate_sample_data(product_name, days=365))
@@ -308,13 +310,35 @@ def api_datatool_stats():
 def api_datatool_collect():
     ensure_data()
     from datatool import run_collect
-    return jsonify(run_collect())
+    mode = request.args.get('mode', 'synthetic')
+    return jsonify(run_collect(mode=mode))
+
+
+@app.route('/api/cron/collect', methods=['GET', 'POST'])
+def api_cron_collect():
+    """
+    Vercel Cron 일일 수집 트리거 — vercel.json crons에서 호출
+    가락시장·KAMIS·KMA 오늘 1일치만 가볍게 적재 (function timeout 회피)
+    """
+    cron_secret = os.environ.get('CRON_SECRET', '')
+    if cron_secret:
+        auth = request.headers.get('Authorization', '')
+        if auth != f'Bearer {cron_secret}':
+            return jsonify({'error': 'unauthorized'}), 401
+
+    ensure_data()
+    from data_collector import collect_today
+    return jsonify(collect_today())
 
 
 @app.route('/api/health', methods=['GET'])
 def api_health():
     """헬스체크"""
-    return jsonify({'status': 'ok', 'python': sys.version})
+    return jsonify({
+        'status': 'ok',
+        'python': sys.version,
+        'db_backend': 'postgres' if IS_POSTGRES else 'sqlite',
+    })
 
 
 @app.route('/api/today', methods=['GET'])

@@ -261,6 +261,15 @@ body {
 .run-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .run-btn .run-ico { font-size: 8px; }
 
+.run-controls { display: flex; align-items: center; gap: 8px; }
+.mode-sel {
+    font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+    color: var(--text); background: var(--panel-2);
+    border: 1px solid var(--border-hi); border-radius: 2px;
+    padding: 3px 6px; cursor: pointer; outline: none;
+}
+.mode-sel:focus { border-color: var(--amber-dim); }
+
 /* ============================================================
    [C] INVENTORY MATRIX
    ============================================================ */

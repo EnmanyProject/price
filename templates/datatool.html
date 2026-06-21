@@ -71,9 +71,15 @@
         <section class="panel panel-console">
             <div class="panel-head">
                 <h2><span class="panel-tag">B</span> 실시간 수집 콘솔</h2>
-                <button class="run-btn" id="runCollect" title="수집 파이프라인 실행 (R)">
-                    <span class="run-ico">▶</span> 수집 실행
-                </button>
+                <div class="run-controls">
+                    <select id="collectMode" class="mode-sel" title="합성=DB 기반 로그(데모 안전) / 실측=외부 API 실제 호출">
+                        <option value="synthetic">합성 모드</option>
+                        <option value="real">실측 모드</option>
+                    </select>
+                    <button class="run-btn" id="runCollect" title="수집 파이프라인 실행 (R)">
+                        <span class="run-ico">▶</span> 수집 실행
+                    </button>
+                </div>
             </div>
             <div class="panel-body">
                 <div class="console" id="console">

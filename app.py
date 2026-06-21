@@ -202,7 +202,21 @@ def api_datatool_stats():
 def api_datatool_collect():
     """수집 트리거 — 콘솔 로그 라인 반환"""
     from datatool import run_collect
-    return jsonify(run_collect())
+    mode = request.args.get('mode', 'synthetic')
+    return jsonify(run_collect(mode=mode))
+
+
+@app.route('/api/cron/collect', methods=['GET', 'POST'])
+def api_cron_collect():
+    """Vercel Cron 일일 수집 트리거"""
+    import os
+    cron_secret = os.environ.get('CRON_SECRET', '')
+    if cron_secret:
+        auth = request.headers.get('Authorization', '')
+        if auth != f'Bearer {cron_secret}':
+            return jsonify({'error': 'unauthorized'}), 401
+    from data_collector import collect_today
+    return jsonify(collect_today())
 
 
 # ===== 메인 =====

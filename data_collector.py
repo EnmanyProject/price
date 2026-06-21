@@ -16,7 +16,7 @@ import requests
 import random
 import math
 from datetime import datetime, timedelta
-from database import get_db
+from database import get_db, upsert_sql
 from config import (
     KAMIS_API_URL, KAMIS_CERT_KEY, KAMIS_CERT_ID,
     GARAK_BASE_URL, GARAK_PRODUCT_MAP,
@@ -498,16 +498,18 @@ def save_price_data(data_list):
         for item in data_list
     ]
 
+    sql = upsert_sql(
+        'price_data',
+        ['product_name', 'price', 'date', 'market', 'source'],
+        ['product_name', 'date', 'market'],
+    )
     try:
-        cursor.executemany('''
-            INSERT OR REPLACE INTO price_data
-            (product_name, price, date, market, source)
-            VALUES (?, ?, ?, ?, ?)
-        ''', rows)
+        cursor.executemany(sql, rows)
         conn.commit()
         saved = len(rows)
     except Exception as e:
         print(f"[ERROR] batch insert 실패: {e}")
+        conn.rollback()
         saved = 0
 
     conn.close()
@@ -609,6 +611,69 @@ def collect_all_data():
     print("=" * 50)
 
     return total_saved
+
+
+def collect_today():
+    """
+    오늘 1일치만 가볍게 수집 — Vercel Cron용
+    가락시장 1회 + KAMIS 11품목 × 1일 + KMA 1일 (function timeout 회피)
+    """
+    from database import init_db
+    init_db()
+
+    today = datetime.now()
+    # 주말은 가락시장 휴장 → 가장 최근 평일
+    while today.weekday() in (5, 6):
+        today -= timedelta(days=1)
+
+    date_str = today.strftime('%Y%m%d')
+    date_iso = today.strftime('%Y-%m-%d')
+
+    stats = {'GARAK': 0, 'KAMIS': 0, 'KMA': 0}
+    errors = []
+
+    # 1. 가락시장 — 1회 요청으로 전체 품목
+    if HAS_BS4:
+        try:
+            garak_items = fetch_garak_daily(date_str)
+            if garak_items:
+                records = []
+                for product_name in PRODUCT_CODES.keys():
+                    matched = match_garak_product(garak_items, product_name)
+                    if matched:
+                        matched['date'] = date_iso
+                        matched['product_name'] = product_name
+                        records.append(matched)
+                if records:
+                    stats['GARAK'] = save_price_data(records)
+        except Exception as e:
+            errors.append(f'GARAK: {e}')
+
+    # 2. KAMIS — 키 있을 때만, 오늘 1일치
+    if KAMIS_CERT_KEY and KAMIS_CERT_ID:
+        for product_name in PRODUCT_CODES.keys():
+            try:
+                data = fetch_kamis_period_retail(product_name, date_iso, date_iso)
+                if data:
+                    stats['KAMIS'] += save_price_data(data)
+            except Exception as e:
+                errors.append(f'KAMIS {product_name}: {e}')
+
+    # 3. KMA — 모듈 있을 때만 (T8에서 추가)
+    try:
+        from weather_collector import collect_weather_today
+        stats['KMA'] = collect_weather_today()
+    except ImportError:
+        pass
+    except Exception as e:
+        errors.append(f'KMA: {e}')
+
+    return {
+        'date': date_iso,
+        'saved': stats,
+        'total': sum(v for v in stats.values() if isinstance(v, int)),
+        'errors': errors,
+    }
 
 
 def get_price_history(product_name, days=365):

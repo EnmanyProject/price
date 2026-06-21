@@ -15,6 +15,22 @@ from datetime import datetime, timedelta
 from data_collector import get_price_history
 from database import get_db
 
+# 품목별 기상 elasticity (도메인 추정 — 실증 데이터 누적되면 회귀로 대체)
+# 단위: 평균기온 1℃ 편차 → 가격 변동률(%)
+_TEMP_ELASTICITY = {
+    '배추': -0.8,    # 잎채소 — 폭염에 약함(웃자람·무름병) → 공급 감소 → 가격↑
+    '시금치': -1.0,
+    '상추': -0.9,
+    '대파': -0.5,
+    '고추': 0.3,     # 과채류 — 적정 고온에 생육 양호
+    '토마토': 0.4,
+    '오이': 0.3,
+    '무': -0.3,
+    '양파': -0.2,
+    '감자': -0.4,
+    '사과': -0.1,    # 영향 적음
+}
+
 
 def _mean(values):
     return sum(values) / len(values) if values else 0
@@ -25,6 +41,56 @@ def _std(values):
         return 0
     m = _mean(values)
     return math.sqrt(sum((x - m) ** 2 for x in values) / len(values))
+
+
+def _weather_context(days_back=30, station='서울'):
+    """최근 N일 weather 요약 — weather 테이블 비어있으면 None"""
+    try:
+        from weather_collector import get_weather_for_date
+    except ImportError:
+        return None
+
+    today = datetime.now()
+    temps, rains = [], []
+    for d in range(days_back):
+        day = today - timedelta(days=d)
+        w = get_weather_for_date(day.strftime('%Y-%m-%d'), station=station)
+        if not w:
+            continue
+        if w.get('avg_temp') is not None:
+            temps.append(w['avg_temp'])
+        if w.get('precipitation') is not None:
+            rains.append(w['precipitation'])
+
+    if not temps:
+        return None
+
+    return {
+        'station': station,
+        'days_back': days_back,
+        'days_with_data': len(temps),
+        'avg_temp': round(_mean(temps), 1),
+        'total_rain': round(sum(rains), 1),
+    }
+
+
+def _apply_weather_adjustment(product_name, base_price, weather_ctx):
+    """
+    weather 시그널로 예측가 보정 — 평년 대비 편차만큼 elasticity 적용
+    weather_ctx가 None이면 무보정(원래 값 반환).
+    """
+    if not weather_ctx or weather_ctx.get('days_with_data', 0) < 10:
+        return base_price, 0.0
+
+    # 평년 기준 — 6월 서울 ASOS 30년 평균(약 22℃). 데모용 상수.
+    normal_temp = 22.0
+    temp_dev = weather_ctx['avg_temp'] - normal_temp
+    elasticity = _TEMP_ELASTICITY.get(product_name, 0.0)
+    adj_pct = temp_dev * elasticity  # %
+    # 보정폭은 ±15%로 제한 — 도메인 추정값이라 폭주 방지
+    adj_pct = max(-15.0, min(15.0, adj_pct))
+    adjusted = base_price * (1 + adj_pct / 100)
+    return adjusted, round(adj_pct, 2)
 
 
 def prepare_price_series(product_name, days=365):
@@ -122,6 +188,9 @@ def predict_arima(product_name, forecast_days=30):
     last_date = datetime.strptime(dates[-1], '%Y-%m-%d')
     last_price = prices[-1]
 
+    weather_ctx = _weather_context()
+    weather_adj_pct = 0.0
+
     results = []
     for i in range(forecast_days):
         pred_date = last_date + timedelta(days=i + 1)
@@ -131,6 +200,11 @@ def predict_arima(product_name, forecast_days=30):
         base = ma7 * 0.5 + ma30 * 0.3 + last_price * 0.2
         pred_price = base + trend_component
         pred_price = max(pred_price, 0)
+
+        # weather 보정 (데이터 없으면 무보정)
+        pred_price, weather_adj_pct = _apply_weather_adjustment(
+            product_name, pred_price, weather_ctx,
+        )
 
         # 신뢰구간 (90%)
         margin = std_resid * 1.645 * math.sqrt(i + 1) * 0.5
@@ -153,6 +227,8 @@ def predict_arima(product_name, forecast_days=30):
             'ma7': round(ma7, 0),
             'ma30': round(ma30, 0),
             'data_points': n,
+            'weather_context': weather_ctx,
+            'weather_adj_pct': weather_adj_pct,
         },
         'success': True,
     }

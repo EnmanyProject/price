@@ -276,7 +276,10 @@
         btn.disabled = true;
         $('conCursor').textContent = '▋';
 
-        fetch('/api/datatool/collect', { method: 'POST' })
+        var modeSel = $('collectMode');
+        var mode = (modeSel && modeSel.value) || 'synthetic';
+
+        fetch('/api/datatool/collect?mode=' + mode, { method: 'POST' })
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 streamLines(data.lines);
