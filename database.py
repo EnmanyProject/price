@@ -8,7 +8,7 @@ row는 양쪽 모두 dict-like 접근 가능 (`row['col']`).
 
 import os
 import sqlite3
-from config import DATABASE_PATH
+import config  # config.DATABASE_PATH는 호출 시점에 동적 참조 (api/index.py에서 /tmp 오버라이드)
 
 DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
 IS_POSTGRES = DATABASE_URL.startswith(('postgres://', 'postgresql://'))
@@ -77,7 +77,7 @@ def get_db():
         # Neon은 sslmode=require가 URL에 이미 포함됨
         return _ConnWrapper(psycopg.connect(DATABASE_URL), True)
 
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(config.DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     return _ConnWrapper(conn, False)
 
@@ -178,7 +178,7 @@ _SCHEMA_POSTGRES = [
 def init_db():
     """스키마 생성 (idempotent)"""
     if not IS_POSTGRES:
-        os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
+        os.makedirs(os.path.dirname(config.DATABASE_PATH), exist_ok=True)
 
     conn = get_db()
     cursor = conn.cursor()
@@ -212,5 +212,5 @@ def upsert_sql(table, columns, conflict_cols):
 
 if __name__ == '__main__':
     init_db()
-    backend = 'Postgres (Neon)' if IS_POSTGRES else f'SQLite ({DATABASE_PATH})'
+    backend = 'Postgres (Neon)' if IS_POSTGRES else f'SQLite ({config.DATABASE_PATH})'
     print(f'데이터베이스 초기화 완료 — {backend}')
