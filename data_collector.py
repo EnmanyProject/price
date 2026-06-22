@@ -698,19 +698,23 @@ def get_latest_prices():
     """
     모든 품목의 최신 가격 조회
     같은 날짜에 여러 market/source가 있어도 품목당 1개 row만 반환 (DISTINCT 보장)
+    window function 사용 — SQLite 3.25+ / Postgres 양쪽 호환
     """
     conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT product_name, price, date, market, source
-        FROM price_data
-        WHERE (product_name, date) IN (
-            SELECT product_name, MAX(date)
+        WITH ranked AS (
+            SELECT product_name, price, date, market, source,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY product_name
+                       ORDER BY date DESC, market
+                   ) AS rn
             FROM price_data
-            GROUP BY product_name
         )
-        GROUP BY product_name
+        SELECT product_name, price, date, market, source
+        FROM ranked
+        WHERE rn = 1
         ORDER BY product_name
     ''')
 
