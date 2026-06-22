@@ -59,7 +59,13 @@ def ensure_data():
         init_db()
 
         if IS_POSTGRES:
-            # 영속 DB — 데이터 재생성 불필요. 비어있으면 Cron이 채울 때까지 빈 화면
+            # 영속 DB — 비어있을 때 1회만 SAMPLE 초기 적재 (이후엔 Cron이 누적)
+            latest = get_latest_prices()
+            if not latest:
+                all_data = []
+                for product_name in PRODUCT_CODES.keys():
+                    all_data.extend(generate_sample_data(product_name, days=365))
+                save_price_data(all_data)
             _DATA_INITIALIZED = True
             return
 
