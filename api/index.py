@@ -314,6 +314,47 @@ def api_datatool_collect():
     return jsonify(run_collect(mode=mode))
 
 
+@app.after_request
+def add_cors_headers(response):
+    """arang.net 정적 사이트에서 /api/* 호출 가능하도록 CORS 허용"""
+    if request.path.startswith('/api/'):
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
+
+
+@app.route('/api/weather/today', methods=['GET'])
+def api_weather_today():
+    """8개 관측소 최신 기상 — arang.net 위젯용 (CORS 허용)"""
+    from config import KMA_STATIONS
+    ensure_data()
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute('''
+        WITH latest AS (
+            SELECT station, MAX(date) AS max_date FROM weather GROUP BY station
+        )
+        SELECT w.station, w.date, w.avg_temp, w.min_temp, w.max_temp,
+               w.precipitation, w.humidity
+        FROM weather w
+        JOIN latest l ON w.station = l.station AND w.date = l.max_date
+    ''')
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+
+    by_name = {r['station']: r for r in rows}
+    station_order = list(KMA_STATIONS.keys())
+    stations = [by_name[name] for name in station_order if name in by_name]
+
+    latest_date = max((r['date'] for r in rows), default=None)
+    return jsonify({
+        'date': latest_date,
+        'count': len(stations),
+        'stations': stations,
+    })
+
+
 @app.route('/api/admin/backfill-weather', methods=['GET', 'POST'])
 def api_backfill_weather():
     """기상 데이터 백필 — 관측소 1곳씩 호출(timeout 안전). 사용 후 제거."""
