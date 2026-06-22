@@ -314,6 +314,31 @@ def api_datatool_collect():
     return jsonify(run_collect(mode=mode))
 
 
+@app.route('/api/admin/backfill-weather', methods=['GET', 'POST'])
+def api_backfill_weather():
+    """기상 데이터 백필 — 관측소 1곳씩 호출(timeout 안전). 사용 후 제거."""
+    from weather_collector import fetch_asos_daily, save_weather
+    from config import KMA_STATIONS
+    from datetime import datetime, timedelta
+
+    station_id = request.args.get('station', '108')
+    days = int(request.args.get('days', 730))
+
+    end = datetime.now()
+    start = end - timedelta(days=days)
+    recs = fetch_asos_daily(station_id, start.strftime('%Y%m%d'), end.strftime('%Y%m%d'))
+    saved = save_weather(recs)
+
+    station_name = next((k for k, v in KMA_STATIONS.items() if v == station_id), '?')
+    return jsonify({
+        'station_id': station_id,
+        'station_name': station_name,
+        'days': days,
+        'fetched': len(recs),
+        'saved': saved,
+    })
+
+
 @app.route('/api/debug/sources', methods=['GET'])
 def api_debug_sources():
     """소스별 키 등록·응답 진단 (개발용)"""
