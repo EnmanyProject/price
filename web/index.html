@@ -221,6 +221,24 @@ header.scrolled .burger span{background:var(--pine)}
 .iv .l{font-size:14px;color:var(--muted);margin-top:8px;line-height:1.55}
 .insight .btn{margin-top:28px}
 
+/* weather (산지 기상) */
+.weather{background:var(--paper)}
+.wx-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:36px;flex-wrap:wrap}
+.wx-head .lead{color:var(--muted);font-size:15.5px;max-width:480px;margin-top:14px;line-height:1.7}
+.wx-date{font-size:13px;color:var(--text-faint);font-variant-numeric:tabular-nums;white-space:nowrap}
+.wx-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.wx-card{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:22px 20px;display:flex;flex-direction:column;gap:10px;transition:transform .25s,box-shadow .25s}
+.wx-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px -14px rgba(22,53,42,.2)}
+.wx-card .city{font-family:var(--serif);font-size:17px;color:var(--pine);font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.wx-card .city .ic{width:30px;height:30px;display:grid;place-items:center;color:var(--leaf)}
+.wx-card .city .ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.wx-card .temp{font-family:var(--serif);font-size:32px;color:var(--ink);font-weight:700;letter-spacing:-.02em;line-height:1;margin-top:2px}
+.wx-card .range{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.wx-card .meta{display:flex;gap:14px;font-size:13px;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.wx-card .meta span{display:inline-flex;gap:5px;align-items:center}
+.wx-card .meta b{color:var(--pine);font-weight:600}
+.wx-loading{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px}
+
 /* contact */
 .contact{background:var(--white)}
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px}
@@ -256,6 +274,8 @@ footer{background:#0e231b;color:rgba(255,255,255,.6);padding:48px 0 40px;font-si
   .burger{display:block;z-index:100}
   .menu .nav-cta{color:#fff!important}
   .greet-grid,.cold-head,.social-grid,.contact-grid,.client-cols,.safe-extra,.insight-grid{grid-template-columns:1fr;gap:32px}
+  .wx-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .wx-card .temp{font-size:28px}
   .facts,.sm-grid,.cert-grid,.cold-features,.proc{grid-template-columns:1fr}
   .sm-stats{grid-template-columns:1fr 1fr}
   .sv-stats{grid-template-columns:1fr 1fr}
@@ -604,6 +624,23 @@ footer{background:#0e231b;color:rgba(255,255,255,.6);padding:48px 0 40px;font-si
   </div>
 </section>
 
+<!-- WEATHER (산지 기상 위젯) -->
+<section class="weather" id="weather">
+  <div class="wrap">
+    <div class="wx-head reveal">
+      <div>
+        <span class="eyebrow">오늘의 산지 기상</span>
+        <h2 class="section-title">전국 주요 산지<br>기상 현황</h2>
+        <p class="lead">매일 새벽 기상청 ASOS 종관관측 자료를 자동 수집합니다. 산지 기온·강수가 농산물 수급과 시세에 직결됩니다.</p>
+      </div>
+      <div class="wx-date">기준일 <span id="wxDate">—</span></div>
+    </div>
+    <div class="wx-grid reveal" id="wxGrid">
+      <div class="wx-loading">불러오는 중…</div>
+    </div>
+  </div>
+</section>
+
 <!-- CONTACT -->
 <section class="contact" id="contact">
   <div class="wrap">
@@ -648,6 +685,33 @@ burger.addEventListener('click',()=>menu.classList.toggle('open'));
 menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>menu.classList.remove('open')));
 const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:0.12,rootMargin:'0px 0px -8% 0px'});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// 산지 기상 위젯 — price.arang.net에서 가져옴
+(function(){
+  const grid=document.getElementById('wxGrid');
+  const dateEl=document.getElementById('wxDate');
+  if(!grid)return;
+  const sun='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M16.95 16.95l1.42 1.42M5.6 18.4l1.4-1.4M16.95 7.05l1.42-1.42"/></svg>';
+  const cloud='<svg viewBox="0 0 24 24"><path d="M7 18a4 4 0 110-8 5 5 0 019.5-1.5A4 4 0 0118 18H7z"/></svg>';
+  const rain='<svg viewBox="0 0 24 24"><path d="M7 14a4 4 0 110-8 5 5 0 019.5-1.5A4 4 0 0118 14H7z"/><path d="M8 18l-1 2.5M12 18l-1 2.5M16 18l-1 2.5"/></svg>';
+  fetch('https://price.arang.net/api/weather/today')
+    .then(r=>r.json())
+    .then(d=>{
+      if(dateEl)dateEl.textContent=d.date||'—';
+      if(!d.stations||!d.stations.length){grid.innerHTML='<div class="wx-loading">데이터 없음</div>';return;}
+      grid.innerHTML=d.stations.map(s=>{
+        const r=s.precipitation||0;
+        const ic=r>=1?rain:r>0?cloud:sun;
+        const at=s.avg_temp!=null?s.avg_temp.toFixed(1)+'℃':'—';
+        const mn=s.min_temp!=null?s.min_temp.toFixed(1)+'°':'—';
+        const mx=s.max_temp!=null?s.max_temp.toFixed(1)+'°':'—';
+        const pr=s.precipitation!=null?s.precipitation.toFixed(1)+'mm':'—';
+        const hm=s.humidity!=null?Math.round(s.humidity)+'%':'—';
+        return `<div class="wx-card"><div class="city"><span>${s.station}</span><span class="ic">${ic}</span></div><div class="temp">${at}</div><div class="range">최저 ${mn} · 최고 ${mx}</div><div class="meta"><span>강수 <b>${pr}</b></span><span>습도 <b>${hm}</b></span></div></div>`;
+      }).join('');
+    })
+    .catch(()=>{grid.innerHTML='<div class="wx-loading">기상 정보를 불러올 수 없습니다</div>';});
+})();
 </script>
 </body>
 </html>
