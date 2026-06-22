@@ -27,6 +27,14 @@ def fetch_asos_daily(stn_id, start_dt, end_dt):
     if not _has_key():
         return []
 
+    # KMA 일자료는 익일 새벽 갱신 — 오늘/미래 포함하면 빈 응답이라 어제로 보정
+    today = datetime.now().strftime('%Y%m%d')
+    yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y%m%d')
+    if end_dt >= today:
+        end_dt = yesterday
+    if start_dt > end_dt:
+        return []
+
     params = {
         'serviceKey': KMA_API_KEY,
         'pageNo': 1,
