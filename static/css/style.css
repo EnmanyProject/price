@@ -1,212 +1,258 @@
-/* 농산물 가격 예측 시스템 - 2021 스타일 CSS */
+/* ============================================================
+   ARANG · PRICE — 농산물 가격 인사이트 스타일시트
+   아랑 회사 홈(arang.net)과 통일된 디자인 토큰
+   ============================================================ */
 
-/* 기본 스타일 */
-body {
-    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
+:root{
+  --pine:#16352A; --pine-2:#1F4A38; --pine-3:#26543E;
+  --leaf:#6FA838; --leaf-bright:#8FC74A; --gold:#C8912E;
+  --paper:#FBFCFA; --paper-2:#F1F4EE; --mint:#EAF2E2;
+  --white:#FFFFFF; --ink:#192219; --muted:#5E6B62; --line:#E2E7DE;
+  --red:#C44545;  /* 가격 상승 (한국 톤) */
+  --blue:#4A6CA8; /* 가격 하락 */
+  --serif:'Gowun Batang', serif;
+  --sans:'Pretendard','Pretendard Variable',-apple-system,system-ui,sans-serif;
 }
 
-/* 네비게이션 */
-.navbar-brand {
-    font-weight: bold;
-    font-size: 1.2rem;
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.7;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em}
+h1,h2,h3,h4{line-height:1.3;letter-spacing:-0.02em;font-weight:700}
+.serif{font-family:var(--serif)}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;background:none;border:0;color:inherit}
+img{max-width:100%}
+.wrap{max-width:1140px;margin:0 auto;padding:0 24px}
+
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--leaf);margin-bottom:14px}
+.eyebrow::before{content:"";width:18px;height:18px;flex:none;background:var(--leaf);
+  -webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2C7 7 4 11 4 15a8 8 0 0016 0c0-4-3-8-8-13z'/></svg>") center/contain no-repeat;
+          mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2C7 7 4 11 4 15a8 8 0 0016 0c0-4-3-8-8-13z'/></svg>") center/contain no-repeat}
+.section-title{font-size:clamp(26px,3.4vw,36px);margin-bottom:10px}
+.section-sub{color:var(--muted);font-size:16px;max-width:660px}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(22,53,42,0);transition:background .35s,box-shadow .35s,padding .35s;padding:18px 0}
+header.scrolled{background:rgba(251,252,250,.94);backdrop-filter:saturate(140%) blur(10px);box-shadow:0 1px 0 var(--line);padding:12px 0}
+.nav{display:flex;align-items:center;justify-content:space-between}
+
+.brand{display:inline-flex;align-items:center;gap:12px;color:#fff}
+header.scrolled .brand{color:var(--pine)}
+.brand .mark{width:38px;height:38px;border-radius:50%;background:var(--leaf);display:grid;place-items:center;flex:none}
+.brand .mark svg{width:22px;height:22px;fill:#fff}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}
+.brand-text .ko{font-family:var(--serif);font-size:18px;font-weight:700}
+.brand-text small{font-size:10px;letter-spacing:0.18em;opacity:.7;text-transform:uppercase}
+
+.menu{display:flex;align-items:center;gap:28px}
+.menu a{font-size:15px;font-weight:600;color:rgba(255,255,255,.85);transition:color .25s}
+.menu a:hover{color:#fff}
+header.scrolled .menu a{color:var(--ink)}
+header.scrolled .menu a:hover{color:var(--leaf)}
+.nav-cta{background:var(--leaf);color:#fff!important;padding:10px 18px;border-radius:999px;font-weight:700;font-size:13.5px;transition:background .25s,transform .25s}
+.nav-cta:hover{background:var(--leaf-bright);transform:translateY(-1px)}
+
+.burger{display:none;width:40px;height:40px}
+.burger span{display:block;width:24px;height:2px;background:#fff;margin:5px auto;transition:.3s}
+header.scrolled .burger span{background:var(--pine)}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero{padding:160px 0 80px;background:linear-gradient(180deg,var(--pine) 0%,var(--pine-2) 60%,var(--pine-3) 100%);color:#fff;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:60px;background:linear-gradient(180deg,transparent,var(--paper))}
+.hero-inner{position:relative;z-index:1}
+.hero .eyebrow{color:var(--leaf-bright)}
+.hero .eyebrow::before{background:var(--leaf-bright)}
+.hero h1{font-size:clamp(34px,5vw,52px);margin-bottom:18px}
+.hero-lead{font-size:17px;color:rgba(255,255,255,.82);max-width:620px;line-height:1.8}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px;align-items:center}
+
+.chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);padding:7px 14px;border-radius:999px;color:#fff;font-size:13px;font-weight:500;transition:background .25s}
+.chip.muted{color:rgba(255,255,255,.78);background:transparent}
+.chip.muted b{color:#fff;font-weight:700;font-variant-numeric:tabular-nums;margin-left:4px}
+.chip.refresh{cursor:pointer;background:rgba(143,199,74,.18);border-color:rgba(143,199,74,.4);color:var(--leaf-bright);font-weight:700}
+.chip.refresh:hover{background:var(--leaf);color:#fff}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--leaf-bright);box-shadow:0 0 0 4px rgba(143,199,74,.18)}
+.chip .dot.up{background:var(--leaf-bright)}
+.chip .dot.off{background:var(--muted)}
+
+/* ============================================================
+   MAIN / BLOCK
+   ============================================================ */
+.main{background:var(--paper)}
+.block{padding:72px 0}
+.block.alt{background:var(--paper-2)}
+.block-head{margin-bottom:36px}
+.block-head.row-between{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+
+/* ============================================================
+   품목 그리드
+   ============================================================ */
+.product-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.grid-loading{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px}
+.product-card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:20px 16px;text-align:center;cursor:pointer;transition:transform .25s,box-shadow .25s,border-color .25s}
+.product-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px -14px rgba(22,53,42,.2);border-color:var(--leaf)}
+.product-card.active{border-color:var(--pine);box-shadow:0 0 0 2px var(--pine) inset,0 14px 30px -16px rgba(22,53,42,.3);background:var(--mint)}
+.product-icon{display:block;width:42px;height:42px;margin:0 auto 10px;object-fit:contain}
+.product-name{font-family:var(--serif);font-size:15.5px;color:var(--pine);font-weight:700;margin-bottom:4px}
+.product-price{font-size:18px;color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.product-change{font-size:12px;margin-top:5px;font-variant-numeric:tabular-nums}
+.price-up{color:var(--red)}
+.price-down{color:var(--blue)}
+.price-same{color:var(--muted)}
+
+/* ============================================================
+   가격 현황 4-stat
+   ============================================================ */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat-card{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:24px 22px;transition:border-color .25s,box-shadow .25s}
+.stat-card.up{border-color:rgba(196,69,69,.35)}
+.stat-card.down{border-color:rgba(74,108,168,.35)}
+.stat-label{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:0.02em}
+.stat-value{font-family:var(--serif);font-size:30px;color:var(--pine);font-weight:700;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat-card.up .stat-value{color:var(--red)}
+.stat-card.down .stat-value{color:var(--blue)}
+.stat-unit{font-size:13px;color:var(--muted);margin-top:6px}
+
+/* ============================================================
+   차트 영역
+   ============================================================ */
+.chart-wrap{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:28px}
+.range-tabs{display:inline-flex;background:var(--white);border:1px solid var(--line);border-radius:999px;padding:4px;gap:2px}
+.range-tab{padding:7px 16px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);transition:background .2s,color .2s}
+.range-tab:hover{color:var(--pine)}
+.range-tab.active{background:var(--pine);color:#fff}
+
+/* ============================================================
+   예측 섹션
+   ============================================================ */
+.predict-grid{display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start}
+.predict-panel{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:28px 26px}
+.panel-title{font-family:var(--serif);font-size:18px;color:var(--pine);margin-bottom:20px}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bottom:8px}
+.sel{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-size:14.5px;color:var(--ink);font-family:inherit;font-weight:500;outline:none;transition:border-color .2s}
+.sel:focus{border-color:var(--leaf)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14.5px;font-weight:700;padding:13px 22px;border-radius:999px;cursor:pointer;transition:background .25s,transform .25s,box-shadow .25s;border:0;font-family:inherit}
+.btn-primary{background:var(--leaf);color:#fff;box-shadow:0 10px 24px -10px rgba(111,168,56,.8)}
+.btn-primary:hover{background:var(--leaf-bright);transform:translateY(-2px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.block-btn{width:100%}
+
+#modelInfo{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.mi-title{font-size:13px;color:var(--muted);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px}
+.mi-table{width:100%;font-size:14px;border-collapse:collapse}
+.mi-table td{padding:8px 0;color:var(--ink)}
+.mi-table td:first-child{color:var(--muted);width:42%}
+.mi-table td:last-child{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.mi-table tr+tr td{border-top:1px dashed var(--line)}
+
+.predict-result{position:relative;min-height:380px}
+.predict-loading{position:absolute;inset:0;display:grid;place-items:center;background:rgba(251,252,250,.85);border-radius:20px;z-index:5}
+.spinner{width:36px;height:36px;border:3px solid var(--mint);border-top-color:var(--leaf);border-radius:50%;animation:spin .9s linear infinite}
+.predict-loading p{margin-top:16px;color:var(--muted);font-size:14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.predict-empty{display:flex;flex-direction:column;align-items:center;gap:14px;padding:60px 30px;color:var(--muted);text-align:center}
+.empty-ic{width:48px;height:48px;display:grid;place-items:center;background:var(--mint);border-radius:14px;color:var(--leaf)}
+.empty-ic svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.predict-empty p{font-size:15px}
+
+.pred-table-wrap{margin-top:24px;background:var(--white);border:1px solid var(--line);border-radius:20px;padding:24px}
+.table-scroll{overflow-x:auto;max-height:380px;overflow-y:auto}
+.pred-table{width:100%;font-size:14px;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.pred-table th{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:0.05em;text-transform:uppercase;padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;position:sticky;top:0;background:var(--white)}
+.pred-table th.r{text-align:right}
+.pred-table th.c{text-align:center}
+.pred-table td{padding:10px 8px;border-bottom:1px solid var(--line);color:var(--ink)}
+.pred-table td.r{text-align:right}
+.pred-table td.c{text-align:center}
+.pred-table tbody tr:last-child td{border-bottom:0}
+
+.pchip{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;font-variant-numeric:tabular-nums}
+.pchip.up{background:rgba(196,69,69,.12);color:var(--red)}
+.pchip.down{background:rgba(74,108,168,.12);color:var(--blue)}
+.pchip.same{background:var(--mint);color:var(--muted)}
+
+/* ============================================================
+   데이터 출처
+   ============================================================ */
+.source-table-wrap{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:8px 24px;margin-bottom:28px;overflow-x:auto}
+.source-table{width:100%;font-size:14px;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.source-table th{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:14px 12px;text-align:left;border-bottom:1px solid var(--line)}
+.source-table th.r{text-align:right}
+.source-table td{padding:14px 12px;border-bottom:1px solid var(--line);color:var(--ink)}
+.source-table td.r{text-align:right}
+.source-table tbody tr:last-child td{border-bottom:0}
+.loading-row{text-align:center;color:var(--muted)}
+.src-badge{display:inline-block;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--mint);color:var(--pine)}
+.src-on{color:var(--leaf);font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.src-on::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--leaf-bright)}
+
+.source-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:24px}
+.src-card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:22px 20px;transition:transform .25s,box-shadow .25s,border-color .25s;display:block}
+.src-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px -14px rgba(22,53,42,.2);border-color:var(--leaf)}
+.src-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.06em;color:var(--gold);background:rgba(200,145,46,.1);padding:3px 9px;border-radius:999px;margin-bottom:10px}
+.src-card h4{font-family:var(--serif);font-size:18px;color:var(--pine);margin-bottom:6px}
+.src-card p{font-size:13.5px;color:var(--muted);line-height:1.5}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.ft{background:var(--pine);color:rgba(255,255,255,.78);padding-top:60px;margin-top:40px}
+.ft-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:48px;padding-bottom:48px;border-bottom:1px solid rgba(255,255,255,.08)}
+.ft .brand{color:#fff}
+.ft-desc{margin-top:18px;font-size:14px;line-height:1.75;max-width:520px;color:rgba(255,255,255,.65)}
+.ft-links{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.ft-links a{font-size:14.5px;color:rgba(255,255,255,.85);transition:color .25s}
+.ft-links a:hover{color:var(--leaf-bright)}
+.ft-bottom{padding:20px 0;font-size:13px;color:rgba(255,255,255,.5)}
+
+/* ============================================================
+   반응형
+   ============================================================ */
+@media (max-width:1100px){
+  .product-grid{grid-template-columns:repeat(4,1fr)}
+  .source-cards{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:880px){
+  .menu{position:fixed;top:0;right:-100%;width:80%;max-width:340px;height:100vh;flex-direction:column;align-items:flex-start;justify-content:center;gap:24px;background:var(--pine);padding:40px;transition:right .35s;z-index:99}
+  .menu.open{right:0}
+  .menu a{color:#fff!important;font-size:18px}
+  .menu .nav-cta{color:#fff!important}
+  .burger{display:block;z-index:100}
+  header.scrolled{padding:10px 0}
+
+  .hero{padding:140px 0 60px}
+  .block{padding:56px 0}
+  .product-grid{grid-template-columns:repeat(3,1fr);gap:10px}
+  .product-card{padding:16px 12px}
+  .product-icon{width:36px;height:36px}
+  .product-name{font-size:14px}
+  .product-price{font-size:16px}
+
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .stat-card{padding:20px 18px}
+  .stat-value{font-size:26px}
+
+  .predict-grid{grid-template-columns:1fr;gap:18px}
+
+  .source-cards{grid-template-columns:1fr 1fr;gap:10px}
+
+  .ft-grid{grid-template-columns:1fr;gap:32px}
+}
+@media (max-width:560px){
+  .product-grid{grid-template-columns:repeat(2,1fr)}
+  .source-cards{grid-template-columns:1fr}
+  .hero-meta{gap:8px}
+  .chip{font-size:12px;padding:6px 12px}
 }
 
-.navbar-brand i {
-    margin-right: 5px;
-}
-
-/* 점보트론 */
-.jumbotron {
-    border-bottom: 3px solid #28a745;
-}
-
-.jumbotron h1 {
-    font-weight: 700;
-}
-
-/* 품목 카드 */
-.product-card {
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-    border-radius: 8px;
-    text-align: center;
-    padding: 15px 10px;
-    margin-bottom: 10px;
-    background: #fff;
-}
-
-.product-card:hover {
-    border-color: #28a745;
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
-    transform: translateY(-2px);
-}
-
-.product-card.active {
-    border-color: #28a745;
-    background-color: #e8f5e9;
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-}
-
-.product-card .product-icon {
-    font-size: 2.5rem;
-    display: block;
-    margin: 0 auto 8px;
-    width: 56px;
-    height: 56px;
-    object-fit: contain;
-    line-height: 1;
-}
-
-.product-card img.product-icon {
-    transition: transform 0.3s ease;
-}
-
-.product-card:hover img.product-icon {
-    transform: scale(1.08);
-}
-
-.product-card .product-name {
-    font-weight: bold;
-    font-size: 1rem;
-    color: #333;
-}
-
-.product-card .product-price {
-    font-size: 0.85rem;
-    color: #666;
-    margin-top: 5px;
-}
-
-.product-card .product-change {
-    font-size: 0.8rem;
-    margin-top: 3px;
-}
-
-.price-up {
-    color: #dc3545;
-}
-
-.price-down {
-    color: #007bff;
-}
-
-.price-same {
-    color: #6c757d;
-}
-
-/* 통계 카드 */
-.card {
-    border-radius: 8px;
-}
-
-.card-header {
-    border-radius: 8px 8px 0 0 !important;
-}
-
-/* 차트 영역 */
-#priceChart, #predictionChart {
-    max-height: 400px;
-}
-
-/* 예측 로딩 */
-.spinner-border {
-    width: 3rem;
-    height: 3rem;
-}
-
-/* 테이블 */
-.table th {
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-
-.table td {
-    font-size: 0.85rem;
-    vertical-align: middle;
-}
-
-/* 버튼 그룹 */
-.btn-group .btn {
-    font-size: 0.8rem;
-}
-
-.btn-group .btn.active {
-    background-color: #28a745 !important;
-    border-color: #28a745 !important;
-    color: #fff !important;
-}
-
-/* 푸터 */
-footer {
-    border-top: 3px solid #28a745;
-}
-
-/* 반응형 */
-@media (max-width: 768px) {
-    .jumbotron h1 {
-        font-size: 1.5rem;
-    }
-
-    .product-card .product-icon {
-        font-size: 1.8rem;
-        width: 42px;
-        height: 42px;
-    }
-
-    .product-card .product-name {
-        font-size: 0.85rem;
-    }
-
-    #priceChart, #predictionChart {
-        max-height: 250px;
-    }
-}
-
-/* 카드 그림자 */
-.shadow-sm {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
-}
-
-/* 데이터 출처 카드 */
-.card-body .fa-2x {
-    display: block;
-}
-
-/* 변동률 배지 */
-.badge-change {
-    font-size: 0.75rem;
-    padding: 3px 8px;
-    border-radius: 12px;
-}
-
-/* 로딩 오버레이 */
-.loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255,255,255,0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-}
-
-/* 2021년 스타일 - 약간 둥근 모서리, 부드러운 그림자 */
-.card {
-    border: 1px solid #e0e0e0;
-}
-
-.card-header h5, .card-header h6 {
-    font-size: 0.95rem;
-}
-
-/* 선택된 기간 버튼 */
-.period-btn.active {
-    background-color: #28a745;
-    color: white;
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+  html{scroll-behavior:auto}
 }
