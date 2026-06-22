@@ -314,6 +314,47 @@ def api_datatool_collect():
     return jsonify(run_collect(mode=mode))
 
 
+@app.route('/api/debug/sources', methods=['GET'])
+def api_debug_sources():
+    """소스별 키 등록·응답 진단 (개발용)"""
+    from datetime import datetime, timedelta
+    from weather_collector import _has_key as kma_has_key, fetch_asos_daily
+    from data_collector import fetch_garak_daily, HAS_BS4, KAMIS_CERT_KEY, KAMIS_CERT_ID
+
+    today = datetime.now()
+    while today.weekday() in (5, 6):
+        today -= timedelta(days=1)
+    test_date_str = today.strftime('%Y%m%d')
+
+    result = {
+        'test_date': test_date_str,
+        'kma': {'has_key': kma_has_key()},
+        'kamis': {'has_key': bool(KAMIS_CERT_KEY and KAMIS_CERT_ID)},
+        'garak': {'bs4_installed': HAS_BS4},
+    }
+
+    if kma_has_key():
+        kma_yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y%m%d')
+        items = fetch_asos_daily('108', kma_yesterday, kma_yesterday)
+        result['kma']['test_call'] = {
+            'date': kma_yesterday, 'station': '108(서울)',
+            'count': len(items),
+            'sample': items[0] if items else None,
+        }
+
+    if HAS_BS4:
+        try:
+            items = fetch_garak_daily(test_date_str)
+            result['garak']['test_call'] = {
+                'date': test_date_str,
+                'count': len(items) if items else 0,
+            }
+        except Exception as e:
+            result['garak']['test_call'] = {'error': str(e)}
+
+    return jsonify(result)
+
+
 @app.route('/api/cron/collect', methods=['GET', 'POST'])
 def api_cron_collect():
     """
