@@ -367,6 +367,60 @@ def api_weather_today():
     })
 
 
+@app.route('/api/debug/kamis-search', methods=['GET'])
+def api_debug_kamis_search():
+    """
+    KAMIS 코드 탐색 — 같은 item_code로 kind/rank 조합을 모두 시도해서
+    어느 조합이 데이터를 반환하는지 찾음.
+    """
+    import requests
+    from config import KAMIS_API_URL, KAMIS_CERT_KEY, KAMIS_CERT_ID
+    product = request.args.get('product', '시금치')
+    info = PRODUCT_CODES.get(product)
+    if not info:
+        return jsonify({'error': 'unknown product'}), 400
+
+    results = []
+    # kind_code 00~05, rank_code 04~06 모두 시도
+    for kind in ['00', '01', '02', '03', '04', '05']:
+        for rank in ['04', '05', '06']:
+            params = {
+                'action': 'periodRetailProductList',
+                'p_startday': '2026-06-01', 'p_endday': '2026-06-15',
+                'p_itemcategorycode': info['item_category_code'],
+                'p_itemcode': info['item_code'],
+                'p_kindcode': kind,
+                'p_productrankcode': rank,
+                'p_countrycode': '1101',
+                'p_convert_kg_yn': 'Y',
+                'p_cert_key': KAMIS_CERT_KEY,
+                'p_cert_id': KAMIS_CERT_ID,
+                'p_returntype': 'json',
+            }
+            try:
+                r = requests.get(KAMIS_API_URL, params=params, timeout=10)
+                body = r.json()
+                items = body.get('data', {}).get('item', [])
+                if isinstance(items, dict):
+                    items = [items]
+                count = len(items) if items else 0
+                err = body.get('data', {}).get('error_code', '')
+                if count > 0:
+                    results.append({
+                        'kind': kind, 'rank': rank, 'count': count,
+                        'sample': items[0] if items else None,
+                    })
+                elif err != '001':
+                    results.append({'kind': kind, 'rank': rank, 'error_code': err})
+            except Exception:
+                continue
+    return jsonify({
+        'product': product, 'item_code': info['item_code'],
+        'category': info['item_category_code'],
+        'working_combinations': results,
+    })
+
+
 @app.route('/api/debug/kamis-raw', methods=['GET'])
 def api_debug_kamis_raw():
     """KAMIS API raw 응답 진단 — 0건 품목 코드 조합 점검용"""
