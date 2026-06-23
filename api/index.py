@@ -367,6 +367,43 @@ def api_weather_today():
     })
 
 
+@app.route('/api/debug/kamis-raw', methods=['GET'])
+def api_debug_kamis_raw():
+    """KAMIS API raw 응답 진단 — 0건 품목 코드 조합 점검용"""
+    import requests
+    from config import KAMIS_API_URL, KAMIS_CERT_KEY, KAMIS_CERT_ID
+    product = request.args.get('product', '시금치')
+    info = PRODUCT_CODES.get(product)
+    if not info:
+        return jsonify({'error': 'unknown product'}), 400
+
+    params = {
+        'action': 'periodRetailProductList',
+        'p_startday': '2026-06-01', 'p_endday': '2026-06-20',
+        'p_itemcategorycode': info['item_category_code'],
+        'p_itemcode': info['item_code'],
+        'p_kindcode': info['kind_code'],
+        'p_productrankcode': info['rank_code'],
+        'p_countrycode': '1101',
+        'p_convert_kg_yn': 'Y',
+        'p_cert_key': KAMIS_CERT_KEY,
+        'p_cert_id': KAMIS_CERT_ID,
+        'p_returntype': 'json',
+    }
+    try:
+        r = requests.get(KAMIS_API_URL, params=params, timeout=15)
+        try:
+            body = r.json()
+        except Exception:
+            body = r.text[:800]
+        return jsonify({
+            'product': product, 'codes': info,
+            'http_status': r.status_code, 'response': body,
+        })
+    except Exception as e:
+        return jsonify({'product': product, 'codes': info, 'error': str(e)}), 500
+
+
 @app.route('/api/admin/backfill-kamis', methods=['GET', 'POST'])
 def api_backfill_kamis():
     """KAMIS 백필 — 품목 1개씩 호출(timeout 안전). 사용 후 제거."""
