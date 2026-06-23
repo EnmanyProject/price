@@ -286,7 +286,9 @@ def fetch_garak_all_products_single_day(date_str=None):
 def fetch_kamis_period_retail(product_name, start_date, end_date, country_code='1101'):
     """
     KAMIS API: periodRetailProductList
-    소매 일별 가격을 기간별로 조회 (최대 1년 단위)
+    소매 일별 가격을 기간별로 조회. KAMIS는 일부 품목에서 90일 초과 윈도우를
+    거부하므로, fetch_real_data가 chunk 분할로 호출한다.
+    일자료는 익일 갱신 — end_date가 오늘/미래면 어제로 자동 보정.
     """
     if not KAMIS_CERT_KEY or not KAMIS_CERT_ID:
         return None
@@ -294,6 +296,14 @@ def fetch_kamis_period_retail(product_name, start_date, end_date, country_code='
     product_info = PRODUCT_CODES.get(product_name)
     if not product_info:
         return None
+
+    # 일자료 익일 갱신 가드 (KMA fetch_asos_daily와 동일 패턴)
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    yesterday_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    if end_date >= today_str:
+        end_date = yesterday_str
+    if start_date > end_date:
+        return []
 
     params = {
         'action': 'periodRetailProductList',
@@ -378,14 +388,21 @@ def _parse_period_response(data, product_name):
     return results
 
 
-def fetch_real_data(product_name, years=2):
-    """KAMIS API로 실제 가격 데이터 수집 (최대 1년 단위 조회)"""
+def fetch_real_data(product_name, years=2, chunk_days=90):
+    """
+    KAMIS API로 실제 가격 데이터 수집.
+    chunk_days(기본 90) 단위로 분할 호출 — 일부 품목(시금치·상추·고추 등)이
+    365일 윈도우 조회를 거부하는 KAMIS 동작 우회.
+    """
     all_data = []
     end_date = datetime.now()
+    total_days = years * 365
 
-    for year_offset in range(years):
-        period_end = end_date - timedelta(days=365 * year_offset)
-        period_start = period_end - timedelta(days=364)
+    offset = 0
+    while offset < total_days:
+        period_end = end_date - timedelta(days=offset)
+        win = min(chunk_days - 1, total_days - offset - 1)
+        period_start = period_end - timedelta(days=win)
 
         start_str = period_start.strftime('%Y-%m-%d')
         end_str = period_end.strftime('%Y-%m-%d')
@@ -395,6 +412,7 @@ def fetch_real_data(product_name, years=2):
         data = fetch_kamis_period_retail(product_name, start_str, end_str)
         if data:
             all_data.extend(data)
+        offset += chunk_days
 
     return all_data if all_data else None
 
@@ -721,12 +739,22 @@ def get_latest_prices():
     conn = get_db()
     cursor = conn.cursor()
 
+    # source 우선순위: KAMIS > ATFRESH > GARAK > SAMPLE
+    # 같은 날짜에 여러 source가 있어도 실데이터(KAMIS·ATFRESH·GARAK)가 SAMPLE보다 우선
     cursor.execute('''
         WITH ranked AS (
             SELECT product_name, price, date, market, source,
                    ROW_NUMBER() OVER (
                        PARTITION BY product_name
-                       ORDER BY date DESC, market
+                       ORDER BY date DESC,
+                                CASE source
+                                    WHEN 'KAMIS' THEN 1
+                                    WHEN 'ATFRESH' THEN 2
+                                    WHEN 'GARAK' THEN 3
+                                    WHEN 'SAMPLE' THEN 9
+                                    ELSE 5
+                                END,
+                                market
                    ) AS rn
             FROM price_data
         )

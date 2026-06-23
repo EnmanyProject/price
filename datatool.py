@@ -29,26 +29,20 @@ except Exception:  # 순환 import 방어
 
 
 # ============================================================
-# 소스 레지스트리 — 실제(live) 3개 + 확장 예정(demo) 5개
+# 소스 레지스트리 — price_data에 실제 적재되는 가격 소스만 (모두 live)
+# 기상(KMA)·통계(KOSIS)는 보조 데이터라 별도 테이블, 본 콘솔 비표시
+# 가짜 데모 카운터(MAFRA·ATMG·KREI) 제거 — 데이터 출처 신뢰성 회복
 # ============================================================
 
 SOURCE_REGISTRY = [
-    {'code': 'GARAK', 'name': '가락시장 도매시장통합',   'kind': 'live',
-     'protocol': 'HTML/Scrape', 'region': '서울 송파', 'url': 'https://www.garakprice.com'},
-    {'code': 'KAMIS', 'name': 'KAMIS 농수산식품유통공사', 'kind': 'live',
-     'protocol': 'REST/JSON',   'region': '전국',     'url': 'https://www.kamis.or.kr'},
-    {'code': 'SAMPLE', 'name': '내부 시뮬레이션 엔진',    'kind': 'live',
-     'protocol': 'Internal',    'region': '—',        'url': ''},
-    {'code': 'MAFRA', 'name': '농림축산식품부 OpenAPI',  'kind': 'demo',
-     'protocol': 'OpenAPI',     'region': '세종',     'url': 'https://www.mafra.go.kr'},
-    {'code': 'ATMG',  'name': 'aT 도매시장 통합거래',     'kind': 'demo',
-     'protocol': 'SOAP/XML',    'region': '나주',     'url': 'https://www.at.or.kr'},
-    {'code': 'KREI',  'name': '한국농촌경제연구원 OASIS', 'kind': 'demo',
-     'protocol': 'CSV/SFTP',    'region': '나주',     'url': 'https://www.krei.re.kr'},
-    {'code': 'KMA',   'name': '기상청 기상자료개방포털',   'kind': 'demo',
-     'protocol': 'REST/JSON',   'region': '전국 ASOS', 'url': 'https://data.kma.go.kr'},
-    {'code': 'KOSIS', 'name': '통계청 KOSIS 통계DB',      'kind': 'demo',
-     'protocol': 'OpenAPI',     'region': '대전',     'url': 'https://kosis.kr'},
+    {'code': 'KAMIS',   'name': 'KAMIS 농수산식품유통공사', 'kind': 'live',
+     'protocol': 'REST/JSON',   'region': '전국 소매',    'url': 'https://www.kamis.or.kr'},
+    {'code': 'ATFRESH', 'name': 'aT 도매시장 통합거래',     'kind': 'live',
+     'protocol': 'REST/JSON',   'region': '가락·구리·안양·대전 등', 'url': 'https://www.at.or.kr'},
+    {'code': 'GARAK',   'name': '가락시장 도매시장통합',   'kind': 'live',
+     'protocol': 'HTML/Scrape', 'region': '서울 송파',    'url': 'https://www.garakprice.com'},
+    {'code': 'SAMPLE',  'name': '내부 시뮬레이션 폴백',    'kind': 'live',
+     'protocol': 'Internal',    'region': '—',           'url': ''},
 ]
 
 _REGISTRY_BY_CODE = {s['code']: s for s in SOURCE_REGISTRY}
