@@ -367,6 +367,26 @@ def api_weather_today():
     })
 
 
+@app.route('/api/admin/backfill-kamis', methods=['GET', 'POST'])
+def api_backfill_kamis():
+    """KAMIS 백필 — 품목 1개씩 호출(timeout 안전). 사용 후 제거."""
+    from data_collector import fetch_real_data, save_price_data
+    product = request.args.get('product', '배추')
+    years = int(request.args.get('years', 2))
+
+    if product not in PRODUCT_CODES:
+        return jsonify({'error': f'알 수 없는 품목: {product}'}), 400
+
+    data = fetch_real_data(product, years=years)
+    saved = save_price_data(data) if data else 0
+    return jsonify({
+        'product': product,
+        'years': years,
+        'fetched': len(data) if data else 0,
+        'saved': saved,
+    })
+
+
 @app.route('/api/debug/sources', methods=['GET'])
 def api_debug_sources():
     """소스별 키 등록·응답 진단 (개발용)"""
