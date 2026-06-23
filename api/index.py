@@ -460,21 +460,42 @@ def api_debug_kamis_raw():
 
 @app.route('/api/admin/backfill-kamis', methods=['GET', 'POST'])
 def api_backfill_kamis():
-    """KAMIS 백필 — 품목 1개씩 호출(timeout 안전). 사용 후 제거."""
-    from data_collector import fetch_real_data, save_price_data
+    """
+    KAMIS 백필 — 일부 품목은 긴 윈도우 거부하므로 chunk 단위 분할 호출.
+    사용 후 제거.
+    """
+    from data_collector import fetch_kamis_period_retail, save_price_data
+    from datetime import datetime, timedelta
     product = request.args.get('product', '배추')
-    years = int(request.args.get('years', 2))
+    days = int(request.args.get('days', 730))
+    chunk = int(request.args.get('chunk', 365))
 
     if product not in PRODUCT_CODES:
         return jsonify({'error': f'알 수 없는 품목: {product}'}), 400
 
-    data = fetch_real_data(product, years=years)
-    saved = save_price_data(data) if data else 0
+    all_data = []
+    end_date = datetime.now()
+    offset = 0
+    calls = 0
+    while offset < days:
+        period_end = end_date - timedelta(days=offset)
+        win = min(chunk - 1, days - offset - 1)
+        period_start = period_end - timedelta(days=win)
+        data = fetch_kamis_period_retail(
+            product,
+            period_start.strftime('%Y-%m-%d'),
+            period_end.strftime('%Y-%m-%d'),
+        )
+        calls += 1
+        if data:
+            all_data.extend(data)
+        offset += chunk
+
+    saved = save_price_data(all_data) if all_data else 0
     return jsonify({
-        'product': product,
-        'years': years,
-        'fetched': len(data) if data else 0,
-        'saved': saved,
+        'product': product, 'days': days, 'chunk': chunk,
+        'api_calls': calls,
+        'fetched': len(all_data), 'saved': saved,
     })
 
 
