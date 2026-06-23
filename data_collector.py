@@ -629,7 +629,7 @@ def collect_today():
     date_str = today.strftime('%Y%m%d')
     date_iso = today.strftime('%Y-%m-%d')
 
-    stats = {'GARAK': 0, 'KAMIS': 0, 'KMA': 0}
+    stats = {'GARAK': 0, 'KAMIS': 0, 'KMA': 0, 'ATFRESH': 0, 'KOSIS': 0}
     errors = []
 
     # 1. 가락시장 — 1회 요청으로 전체 품목
@@ -659,7 +659,7 @@ def collect_today():
             except Exception as e:
                 errors.append(f'KAMIS {product_name}: {e}')
 
-    # 3. KMA — 모듈 있을 때만 (T8에서 추가)
+    # 3. KMA — 모듈 있을 때만
     try:
         from weather_collector import collect_weather_today
         stats['KMA'] = collect_weather_today()
@@ -667,6 +667,24 @@ def collect_today():
         pass
     except Exception as e:
         errors.append(f'KMA: {e}')
+
+    # 4. aT FRESH — 키 있을 때만, 어제 데이터(도매는 익일 게재)
+    try:
+        from atfresh_collector import collect_atfresh_today
+        stats['ATFRESH'] = collect_atfresh_today()
+    except ImportError:
+        pass
+    except Exception as e:
+        errors.append(f'ATFRESH: {e}')
+
+    # 5. KOSIS — 월별 통계, 매일 호출해도 갱신 무관(idempotent)
+    try:
+        from kosis_collector import collect_kosis_recent
+        stats['KOSIS'] = collect_kosis_recent()
+    except ImportError:
+        pass
+    except Exception as e:
+        errors.append(f'KOSIS: {e}')
 
     return {
         'date': date_iso,

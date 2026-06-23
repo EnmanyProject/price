@@ -45,6 +45,24 @@ MAFRA_URL = "https://www.mafra.go.kr"
 # 농식품유통정보센터
 ATC_URL = "http://www.atc.go.kr"
 
+# aT 도매시장 통합거래정보 (공공데이터포털)
+# 인증키 발급: https://www.data.go.kr/ ("한국농수산식품유통공사 aT 도매시장")
+# 데이터: 가락·구리·안양·대전 등 통합 도매시장 일별 거래
+ATFRESH_API_URL = "http://apis.data.go.kr/B552895/at_freshAuction_v2/getATFreshAuctionList"
+ATFRESH_API_KEY = os.environ.get('ATFRESH_API_KEY', '')
+
+# KOSIS 통계 OpenAPI (통계청)
+# 인증키 발급: https://kosis.kr/openapi/ (통계청 자체 사이트, 공공데이터포털 아님)
+# 주요 통계표(농산물 CPI):
+#   - DT_1J17001 (신선식품지수)
+#   - DT_1J17002 (농산물 CPI 세부)
+KOSIS_API_URL = "https://kosis.kr/openapi/Param/statisticsParameterData.do"
+KOSIS_API_KEY = os.environ.get('KOSIS_API_KEY', '')
+KOSIS_TABLES = {
+    'fresh_food_index': 'DT_1J17001',
+    'agri_cpi': 'DT_1J17002',
+}
+
 # 데이터베이스
 DATABASE_PATH = os.path.join(BASE_DIR, 'data', 'prices.db')
 
