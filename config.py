@@ -84,7 +84,7 @@ PRODUCT_CODES = {
     '시금치': {
         'item_category_code': '200',
         'item_code': '214',
-        'kind_code': '00',
+        'kind_code': '01',
         'rank_code': '04',
         'category': '엽경채류',
         'unit': 'kg',
@@ -93,7 +93,7 @@ PRODUCT_CODES = {
     '상추': {
         'item_category_code': '200',
         'item_code': '252',
-        'kind_code': '01',
+        'kind_code': '00',
         'rank_code': '04',
         'category': '엽경채류',
         'unit': 'kg',
@@ -102,7 +102,7 @@ PRODUCT_CODES = {
     '고추': {
         'item_category_code': '200',
         'item_code': '213',
-        'kind_code': '01',
+        'kind_code': '00',
         'rank_code': '04',
         'category': '과채류',
         'unit': 'kg',
@@ -111,7 +111,7 @@ PRODUCT_CODES = {
     '토마토': {
         'item_category_code': '200',
         'item_code': '225',
-        'kind_code': '01',
+        'kind_code': '00',
         'rank_code': '04',
         'category': '과채류',
         'unit': 'kg',
@@ -147,7 +147,7 @@ PRODUCT_CODES = {
     '양파': {
         'item_category_code': '200',
         'item_code': '246',
-        'kind_code': '01',
+        'kind_code': '00',
         'rank_code': '04',
         'category': '근채류',
         'unit': 'kg',
@@ -165,7 +165,7 @@ PRODUCT_CODES = {
     '사과': {
         'item_category_code': '400',
         'item_code': '411',
-        'kind_code': '01',
+        'kind_code': '05',
         'rank_code': '04',
         'category': '과일류',
         'unit': 'kg',
