@@ -16,6 +16,8 @@ from predictor import (
     predict_arima,
     predict_exponential_smoothing,
     predict_moving_average,
+    predict_holt_winters,
+    predict_ensemble,
     get_price_statistics,
 )
 from config import PRODUCT_CODES
@@ -121,7 +123,11 @@ def api_predict():
         return jsonify({'success': False, 'error': '지원하지 않는 품목입니다.'})
 
     # 모델 선택
-    if model_type == 'arima':
+    if model_type == 'ensemble':
+        result = predict_ensemble(product_name, forecast_days)
+    elif model_type == 'holt_winters':
+        result = predict_holt_winters(product_name, forecast_days)
+    elif model_type == 'arima':
         result = predict_arima(product_name, forecast_days)
     elif model_type == 'exp_smoothing':
         result = predict_exponential_smoothing(product_name, forecast_days)

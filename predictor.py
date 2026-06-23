@@ -74,10 +74,52 @@ def _weather_context(days_back=30, station='서울'):
     }
 
 
-def _apply_weather_adjustment(product_name, base_price, weather_ctx):
+def _learn_temp_elasticity(product_name, days=365):
+    """
+    과거 가격·기온 단순 회귀로 품목별 elasticity 학습.
+    실패하면 _TEMP_ELASTICITY 도메인 추정값 반환.
+    반환: %/℃ (가격 변동률 per ℃)
+    """
+    try:
+        from weather_collector import get_weather_for_date
+    except ImportError:
+        return _TEMP_ELASTICITY.get(product_name, 0.0)
+
+    dates, prices = prepare_price_series(product_name, days=days)
+    if not prices or len(prices) < 60:
+        return _TEMP_ELASTICITY.get(product_name, 0.0)
+
+    pairs = []
+    for d, p in zip(dates, prices):
+        w = get_weather_for_date(d, station='서울')
+        if w and w.get('avg_temp') is not None and p > 0:
+            pairs.append((w['avg_temp'], p))
+
+    if len(pairs) < 30:
+        return _TEMP_ELASTICITY.get(product_name, 0.0)
+
+    n = len(pairs)
+    tx = [t for t, _ in pairs]
+    ty = [p for _, p in pairs]
+    tmean = sum(tx) / n
+    ymean = sum(ty) / n
+    num = sum((tx[i] - tmean) * (ty[i] - ymean) for i in range(n))
+    den = sum((tx[i] - tmean) ** 2 for i in range(n))
+    if den == 0 or ymean == 0:
+        return _TEMP_ELASTICITY.get(product_name, 0.0)
+
+    slope = num / den       # 원/℃
+    elasticity = (slope / ymean) * 100  # %/℃
+    # 비현실적 값(±5% 초과)이면 도메인 값으로 후퇴
+    if abs(elasticity) > 5.0:
+        return _TEMP_ELASTICITY.get(product_name, 0.0)
+    return round(elasticity, 3)
+
+
+def _apply_weather_adjustment(product_name, base_price, weather_ctx, elasticity=None):
     """
     weather 시그널로 예측가 보정 — 평년 대비 편차만큼 elasticity 적용
-    weather_ctx가 None이면 무보정(원래 값 반환).
+    elasticity=None이면 _TEMP_ELASTICITY 또는 학습값 사용
     """
     if not weather_ctx or weather_ctx.get('days_with_data', 0) < 10:
         return base_price, 0.0
@@ -85,7 +127,8 @@ def _apply_weather_adjustment(product_name, base_price, weather_ctx):
     # 평년 기준 — 6월 서울 ASOS 30년 평균(약 22℃). 데모용 상수.
     normal_temp = 22.0
     temp_dev = weather_ctx['avg_temp'] - normal_temp
-    elasticity = _TEMP_ELASTICITY.get(product_name, 0.0)
+    if elasticity is None:
+        elasticity = _TEMP_ELASTICITY.get(product_name, 0.0)
     adj_pct = temp_dev * elasticity  # %
     # 보정폭은 ±15%로 제한 — 도메인 추정값이라 폭주 방지
     adj_pct = max(-15.0, min(15.0, adj_pct))
@@ -189,6 +232,7 @@ def predict_arima(product_name, forecast_days=30):
     last_price = prices[-1]
 
     weather_ctx = _weather_context()
+    learned_elasticity = _learn_temp_elasticity(product_name)
     weather_adj_pct = 0.0
 
     results = []
@@ -201,9 +245,9 @@ def predict_arima(product_name, forecast_days=30):
         pred_price = base + trend_component
         pred_price = max(pred_price, 0)
 
-        # weather 보정 (데이터 없으면 무보정)
+        # weather 보정 (학습된 elasticity 우선, 데이터 없으면 도메인값)
         pred_price, weather_adj_pct = _apply_weather_adjustment(
-            product_name, pred_price, weather_ctx,
+            product_name, pred_price, weather_ctx, learned_elasticity,
         )
 
         # 신뢰구간 (90%)
@@ -229,6 +273,169 @@ def predict_arima(product_name, forecast_days=30):
             'data_points': n,
             'weather_context': weather_ctx,
             'weather_adj_pct': weather_adj_pct,
+            'learned_elasticity': learned_elasticity,
+        },
+        'success': True,
+    }
+
+
+def _seasonal_factors(dates, prices):
+    """월별 평균 ÷ 전체 평균 = 12개월 계절 인덱스 (충분한 데이터 없으면 1.0)"""
+    by_month = {m: [] for m in range(1, 13)}
+    for d, p in zip(dates, prices):
+        if p <= 0:
+            continue
+        try:
+            m = int(d[5:7])
+        except (ValueError, IndexError):
+            continue
+        by_month[m].append(p)
+    overall = _mean([p for p in prices if p > 0]) or 1.0
+    factors = {}
+    for m in range(1, 13):
+        vals = by_month[m]
+        factors[m] = (_mean(vals) / overall) if len(vals) >= 3 else 1.0
+    return factors
+
+
+def predict_holt_winters(product_name, forecast_days=30):
+    """
+    Holt-Winters 풍 계절 분해 — 추세(선형회귀) × 계절(월별 인덱스)
+    농산물 12개월 cycle 반영. 365일 이상 데이터 권장.
+    """
+    dates, prices = prepare_price_series(product_name, days=730)
+    if not prices or len(prices) < 90:
+        return predict_moving_average(product_name, forecast_days)
+
+    n = len(prices)
+    seasonal = _seasonal_factors(dates, prices)
+
+    # 계절 제거 후 선형 추세 학습
+    deseasoned = []
+    for i, p in enumerate(prices):
+        try:
+            m = int(dates[i][5:7])
+        except (ValueError, IndexError):
+            m = 1
+        s = seasonal.get(m, 1.0) or 1.0
+        deseasoned.append(p / s)
+
+    x_mean = (n - 1) / 2
+    y_mean = _mean(deseasoned)
+    num = sum((i - x_mean) * (deseasoned[i] - y_mean) for i in range(n))
+    den = sum((i - x_mean) ** 2 for i in range(n))
+    slope = num / den if den != 0 else 0
+    intercept = y_mean - slope * x_mean
+
+    residuals = [deseasoned[i] - (intercept + slope * i) for i in range(n)]
+    std_resid = _std(residuals[-90:]) if len(residuals) >= 90 else _std(residuals)
+
+    weather_ctx = _weather_context()
+    learned_elasticity = _learn_temp_elasticity(product_name)
+    weather_adj_pct = 0.0
+
+    last_date = datetime.strptime(dates[-1], '%Y-%m-%d')
+    results = []
+    for i in range(forecast_days):
+        pred_date = last_date + timedelta(days=i + 1)
+        t = n + i
+        s = seasonal.get(pred_date.month, 1.0) or 1.0
+        base = (intercept + slope * t) * s
+
+        # weather 보정
+        base, weather_adj_pct = _apply_weather_adjustment(
+            product_name, base, weather_ctx, learned_elasticity,
+        )
+        pred_price = max(base, 0)
+
+        # 신뢰구간 — 계절 인덱스 반영
+        margin = std_resid * s * 1.645 * math.sqrt(i + 1) * 0.4
+
+        results.append({
+            'date': pred_date.strftime('%Y-%m-%d'),
+            'predicted_price': round(pred_price, 0),
+            'confidence_lower': round(max(pred_price - margin, 0), 0),
+            'confidence_upper': round(pred_price + margin, 0),
+            'model': 'HoltWinters',
+        })
+
+    season_range = round(max(seasonal.values()) - min(seasonal.values()), 3)
+    return {
+        'product_name': product_name,
+        'forecast_days': forecast_days,
+        'predictions': results,
+        'model_info': {
+            'type': 'Holt-Winters (추세 + 12개월 계절)',
+            'trend_slope': round(slope, 3),
+            'season_range': season_range,
+            'season_peak_month': max(seasonal, key=seasonal.get),
+            'season_low_month': min(seasonal, key=seasonal.get),
+            'data_points': n,
+            'weather_context': weather_ctx,
+            'weather_adj_pct': weather_adj_pct,
+            'learned_elasticity': learned_elasticity,
+        },
+        'success': True,
+    }
+
+
+def predict_ensemble(product_name, forecast_days=30):
+    """
+    4개 모델 평균 앙상블 — ARIMA·지수평활·이동평균·Holt-Winters
+    각 모델 결과를 단순 평균(같은 가중치). 신뢰구간은 평균.
+    """
+    models = [
+        ('TrendMA', predict_arima),
+        ('ExpSmoothing', predict_exponential_smoothing),
+        ('MovingAverage', predict_moving_average),
+        ('HoltWinters', predict_holt_winters),
+    ]
+
+    member_results = {}
+    for name, func in models:
+        try:
+            r = func(product_name, forecast_days)
+            if r.get('success') and r.get('predictions'):
+                member_results[name] = r['predictions']
+        except Exception as e:
+            print(f'[ensemble] {name} 실패: {e}')
+
+    if not member_results:
+        return predict_moving_average(product_name, forecast_days)
+
+    n_models = len(member_results)
+    ensemble = []
+    for i in range(forecast_days):
+        preds, lowers, uppers, date = [], [], [], None
+        for name, preds_list in member_results.items():
+            if i < len(preds_list):
+                p = preds_list[i]
+                preds.append(p['predicted_price'])
+                lowers.append(p['confidence_lower'])
+                uppers.append(p['confidence_upper'])
+                date = p['date']
+        if not preds:
+            continue
+        ensemble.append({
+            'date': date,
+            'predicted_price': round(sum(preds) / len(preds), 0),
+            'confidence_lower': round(sum(lowers) / len(lowers), 0),
+            'confidence_upper': round(sum(uppers) / len(uppers), 0),
+            'model': 'Ensemble',
+        })
+
+    # 학습 데이터 수는 가장 깊은 모델 기준
+    dates, prices = prepare_price_series(product_name, days=730)
+    return {
+        'product_name': product_name,
+        'forecast_days': forecast_days,
+        'predictions': ensemble,
+        'model_info': {
+            'type': f'앙상블 ({n_models}개 모델 평균)',
+            'models_used': list(member_results.keys()),
+            'data_points': len(prices) if prices else 0,
+            'weather_context': _weather_context(),
+            'learned_elasticity': _learn_temp_elasticity(product_name),
         },
         'success': True,
     }

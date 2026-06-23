@@ -132,7 +132,9 @@
           <div class="field">
             <label for="modelType">예측 모델</label>
             <select id="modelType" class="sel">
-              <option value="arima" selected>ARIMA (추세+이동평균)</option>
+              <option value="ensemble" selected>앙상블 (4모델 평균, 추천)</option>
+              <option value="holt_winters">Holt-Winters (계절성 12개월)</option>
+              <option value="arima">ARIMA (추세 + 이동평균)</option>
               <option value="exp_smoothing">지수평활법 (Holt)</option>
               <option value="moving_avg">이동평균</option>
             </select>

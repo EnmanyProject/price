@@ -341,12 +341,19 @@ function renderModelInfo(modelInfo) {
   var html = '';
   html += '<tr><td>모델</td><td>' + (modelInfo.type || '—') + '</td></tr>';
   html += '<tr><td>학습 데이터</td><td>' + (modelInfo.data_points || '—') + '건</td></tr>';
+  if (modelInfo.models_used) html += '<tr><td>참여 모델</td><td>' + modelInfo.models_used.length + '개</td></tr>';
   if (modelInfo.ma7 !== undefined) html += '<tr><td>7일 이동평균</td><td>' + numberFormat(modelInfo.ma7) + '원</td></tr>';
   if (modelInfo.ma30 !== undefined) html += '<tr><td>30일 이동평균</td><td>' + numberFormat(modelInfo.ma30) + '원</td></tr>';
   if (modelInfo.trend !== undefined) html += '<tr><td>일일 추세</td><td>' + modelInfo.trend + ' 원/일</td></tr>';
+  if (modelInfo.season_range !== undefined) html += '<tr><td>계절성 진폭</td><td>' + (modelInfo.season_range * 100).toFixed(1) + '%</td></tr>';
+  if (modelInfo.season_peak_month) html += '<tr><td>최고가 월</td><td>' + modelInfo.season_peak_month + '월</td></tr>';
+  if (modelInfo.season_low_month) html += '<tr><td>최저가 월</td><td>' + modelInfo.season_low_month + '월</td></tr>';
   if (modelInfo.weather_context && modelInfo.weather_context.avg_temp != null) {
     html += '<tr><td>최근 평균기온</td><td>' + modelInfo.weather_context.avg_temp + '℃</td></tr>';
-    html += '<tr><td>기상 보정</td><td>' + (modelInfo.weather_adj_pct || 0) + '%</td></tr>';
+    if (modelInfo.weather_adj_pct !== undefined) html += '<tr><td>기상 보정</td><td>' + modelInfo.weather_adj_pct + '%</td></tr>';
+    if (modelInfo.learned_elasticity !== undefined && modelInfo.learned_elasticity !== null) {
+      html += '<tr><td>학습 elasticity</td><td>' + modelInfo.learned_elasticity + ' %/℃</td></tr>';
+    }
   }
   $('#modelInfoTable').html(html);
   $('#modelInfo').show();
