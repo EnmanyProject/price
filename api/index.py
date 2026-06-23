@@ -367,6 +367,51 @@ def api_weather_today():
     })
 
 
+@app.route('/api/debug/kamis-itemscan', methods=['GET'])
+def api_debug_kamis_itemscan():
+    """item_code 범위를 직접 스캔 — 카탈로그에 없는 품목 코드 찾기"""
+    import requests
+    from config import KAMIS_API_URL, KAMIS_CERT_KEY, KAMIS_CERT_ID
+    cat = request.args.get('cat', '200')
+    start = int(request.args.get('start', '240'))
+    end = int(request.args.get('end', '252'))
+
+    hits = []
+    for ic in range(start, end + 1):
+        for kind in ['00', '01', '02']:
+            params = {
+                'action': 'periodRetailProductList',
+                'p_startday': '2026-06-01', 'p_endday': '2026-06-10',
+                'p_itemcategorycode': cat,
+                'p_itemcode': str(ic),
+                'p_kindcode': kind,
+                'p_productrankcode': '04',
+                'p_countrycode': '1101',
+                'p_convert_kg_yn': 'Y',
+                'p_cert_key': KAMIS_CERT_KEY,
+                'p_cert_id': KAMIS_CERT_ID,
+                'p_returntype': 'json',
+            }
+            try:
+                r = requests.get(KAMIS_API_URL, params=params, timeout=8)
+                body = r.json()
+                items = body.get('data', {}).get('item', [])
+                if isinstance(items, dict):
+                    items = [items]
+                if items and len(items) > 0:
+                    sample = items[0]
+                    hits.append({
+                        'item_code': str(ic), 'kind': kind,
+                        'count': len(items),
+                        'item_name': sample.get('itemname') or sample.get('itemName') or sample.get('item_name') or '?',
+                        'kind_name': sample.get('kindname') or sample.get('kindName') or '?',
+                        'sample_price': sample.get('price') or sample.get('dpr1'),
+                    })
+            except Exception:
+                continue
+    return jsonify({'category': cat, 'scanned': f'{start}-{end}', 'hits': hits})
+
+
 @app.route('/api/debug/kamis-search', methods=['GET'])
 def api_debug_kamis_search():
     """
