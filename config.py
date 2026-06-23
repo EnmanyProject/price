@@ -137,8 +137,8 @@ PRODUCT_CODES = {
     },
     '대파': {
         'item_category_code': '200',
-        'item_code': '244',
-        'kind_code': '01',
+        'item_code': '245',
+        'kind_code': '00',
         'rank_code': '04',
         'category': '엽경채류',
         'unit': 'kg',
