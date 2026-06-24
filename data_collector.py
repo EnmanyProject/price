@@ -713,15 +713,40 @@ def collect_today():
 
 
 def get_price_history(product_name, days=365):
-    """특정 품목의 가격 이력 조회 (가상 기준일 기준)"""
+    """
+    특정 품목의 가격 이력 — 날짜당 1건만 (source 우선순위 적용)
+    같은 날짜에 KAMIS 서울·KAMIS 평균·SAMPLE 등 여러 행 있어도 가장 신뢰성
+    높은 source 1개만 반환 → 차트 들쭉날쭉 방지
+    """
     conn = get_db()
     cursor = conn.cursor()
 
     start_date = (get_today() - timedelta(days=days)).strftime('%Y-%m-%d')
     cursor.execute('''
+        WITH ranked AS (
+            SELECT date, price, market, source,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY date
+                       ORDER BY CASE source
+                                    WHEN 'KAMIS' THEN 1
+                                    WHEN 'ATFRESH' THEN 2
+                                    WHEN 'GARAK' THEN 3
+                                    WHEN 'SAMPLE' THEN 9
+                                    ELSE 5
+                                END,
+                                CASE market
+                                    WHEN '평균' THEN 1
+                                    WHEN '전국평균' THEN 2
+                                    ELSE 3
+                                END,
+                                market
+                   ) AS rn
+            FROM price_data
+            WHERE product_name = ? AND date >= ?
+        )
         SELECT date, price, market, source
-        FROM price_data
-        WHERE product_name = ? AND date >= ?
+        FROM ranked
+        WHERE rn = 1
         ORDER BY date ASC
     ''', (product_name, start_date))
 
