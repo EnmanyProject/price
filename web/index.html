@@ -50,6 +50,9 @@ header.scrolled .brand small{color:var(--muted)}
 .menu a:hover{color:#fff}
 header.scrolled .menu a{color:var(--ink)}
 header.scrolled .menu a:hover{color:var(--leaf)}
+.menu-new{display:inline-flex;align-items:center;gap:7px}
+.new-badge{font-size:9px;font-weight:800;background:var(--leaf-bright);color:var(--pine);padding:2px 6px;border-radius:999px;letter-spacing:0.5px;line-height:1.2;animation:newPulse 2.4s ease-in-out infinite}
+@keyframes newPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(143,199,74,0.45)}50%{transform:scale(1.06);box-shadow:0 0 0 4px rgba(143,199,74,0)}}
 .nav-cta{background:var(--leaf);color:#fff!important;padding:10px 20px;border-radius:999px;font-weight:700;font-size:14px;transition:background .25s,transform .25s}
 .nav-cta:hover{background:var(--leaf-bright);transform:translateY(-1px)}
 .burger{display:none;background:none;border:0;cursor:pointer;width:40px;height:40px}
@@ -304,8 +307,10 @@ footer{background:#0e231b;color:rgba(255,255,255,.6);padding:48px 0 40px;font-si
       <a href="#school">학교급식</a>
       <a href="#safety">안전·품질</a>
       <a href="#certs">인증</a>
-      <a href="#cold">콜드체인</a>
       <a href="#clients">거래처</a>
+      <a href="https://price.arang.net" target="_blank" rel="noopener" class="menu-new">
+        가격 인사이트<span class="new-badge">NEW</span>
+      </a>
       <a href="#contact" class="nav-cta">문의하기</a>
     </nav>
     <button class="burger" id="burger" aria-label="메뉴 열기"><span></span><span></span><span></span></button>
