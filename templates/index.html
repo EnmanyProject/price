@@ -130,14 +130,15 @@
             </select>
           </div>
           <div class="field">
-            <label for="modelType">예측 모델</label>
+            <label for="modelType">예측 방식</label>
             <select id="modelType" class="sel">
-              <option value="ensemble" selected>앙상블 (4모델 평균, 추천)</option>
-              <option value="holt_winters">Holt-Winters (계절성 12개월)</option>
-              <option value="arima">ARIMA (추세 + 이동평균)</option>
-              <option value="exp_smoothing">지수평활법 (Holt)</option>
-              <option value="moving_avg">이동평균</option>
+              <option value="ensemble" selected>종합 예측 (추천)</option>
+              <option value="holt_winters">계절 흐름 반영</option>
+              <option value="arima">추세 중심</option>
+              <option value="exp_smoothing">최근 가격 가중</option>
+              <option value="moving_avg">단순 평균</option>
             </select>
+            <small class="field-hint">여러 방식을 평균낸 종합 예측이 가장 안정적입니다.</small>
           </div>
           <button class="btn btn-primary block-btn" onclick="runPrediction()">예측 실행 →</button>
 
@@ -152,6 +153,27 @@
             <div class="spinner"></div>
             <p>예측을 계산하고 있습니다…</p>
           </div>
+
+          <!-- 한줄 요약 카드 -->
+          <div id="predictionSummary" class="pred-summary" style="display:none">
+            <div class="ps-item">
+              <div class="ps-label">예측 마지막일</div>
+              <div class="ps-value" id="psLastDate">—</div>
+            </div>
+            <div class="ps-item">
+              <div class="ps-label">예상 가격</div>
+              <div class="ps-value" id="psLastPrice">—</div>
+            </div>
+            <div class="ps-item">
+              <div class="ps-label">현재 대비</div>
+              <div class="ps-value" id="psChange">—</div>
+            </div>
+            <div class="ps-item">
+              <div class="ps-label">예상 범위</div>
+              <div class="ps-value" id="psRange">—</div>
+            </div>
+          </div>
+
           <div class="chart-wrap"><canvas id="predictionChart" height="100"></canvas></div>
           <div id="predictionEmpty" class="predict-empty">
             <span class="empty-ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18M7 15l4-6 3 4 5-8"/></svg></span>

@@ -228,6 +228,7 @@ function runPrediction() {
   $('#predictionLoading').show();
   $('#predictionEmpty').hide();
   $('#predictionTableCard').hide();
+  $('#predictionSummary').hide();
   $('#modelInfo').hide();
 
   $.ajax({
@@ -260,6 +261,24 @@ function renderPredictionChart(data) {
   });
 
   $('#predictionChartTitle').text(data.product_name + ' 가격 예측 · ' + data.forecast_days + '일');
+
+  // 한줄 요약 카드
+  if (predicted.length) {
+    var lastPrice = predicted[predicted.length - 1];
+    var lastDate = labels[labels.length - 1];
+    var lastLow = lower[lower.length - 1];
+    var lastHigh = upper[upper.length - 1];
+    var currentTxt = $('#currentPrice').text().replace(/,/g, '');
+    var current = parseFloat(currentTxt);
+    var chg = current ? ((lastPrice - current) / current * 100) : 0;
+    var chgClass = chg > 0.5 ? 'price-up' : (chg < -0.5 ? 'price-down' : 'price-same');
+    var chgSign = chg > 0 ? '▲' : (chg < 0 ? '▼' : '—');
+    $('#psLastDate').text(lastDate);
+    $('#psLastPrice').text(numberFormat(lastPrice) + '원');
+    $('#psChange').html('<span class="' + chgClass + '">' + chgSign + ' ' + Math.abs(chg).toFixed(1) + '%</span>');
+    $('#psRange').text(numberFormat(lastLow) + ' ~ ' + numberFormat(lastHigh) + '원');
+    $('#predictionSummary').show();
+  }
   if (predictionChart) predictionChart.destroy();
 
   var ctx = document.getElementById('predictionChart').getContext('2d');
@@ -269,7 +288,7 @@ function renderPredictionChart(data) {
       labels: labels,
       datasets: [
         {
-          label: '예측가',
+          label: '예상 가격',
           data: predicted,
           borderColor: COLOR.pine,
           backgroundColor: 'transparent',
@@ -279,7 +298,7 @@ function renderPredictionChart(data) {
           fill: false, tension: 0.3,
         },
         {
-          label: '신뢰구간 상한 (90%)',
+          label: '예상 최고',
           data: upper,
           borderColor: 'rgba(111,168,56,0.4)',
           backgroundColor: 'rgba(143,199,74,0.15)',
@@ -287,7 +306,7 @@ function renderPredictionChart(data) {
           pointRadius: 0, fill: '+1', tension: 0.3,
         },
         {
-          label: '신뢰구간 하한 (90%)',
+          label: '예상 최저',
           data: lower,
           borderColor: 'rgba(111,168,56,0.4)',
           backgroundColor: 'transparent',
@@ -338,21 +357,24 @@ function renderPredictionTable(predictions) {
 }
 
 function renderModelInfo(modelInfo) {
+  // 일반 사용자 친화 — 핵심 정보만, 통계 용어 제거
   var html = '';
-  html += '<tr><td>모델</td><td>' + (modelInfo.type || '—') + '</td></tr>';
-  html += '<tr><td>학습 데이터</td><td>' + (modelInfo.data_points || '—') + '건</td></tr>';
-  if (modelInfo.models_used) html += '<tr><td>참여 모델</td><td>' + modelInfo.models_used.length + '개</td></tr>';
-  if (modelInfo.ma7 !== undefined) html += '<tr><td>7일 이동평균</td><td>' + numberFormat(modelInfo.ma7) + '원</td></tr>';
-  if (modelInfo.ma30 !== undefined) html += '<tr><td>30일 이동평균</td><td>' + numberFormat(modelInfo.ma30) + '원</td></tr>';
-  if (modelInfo.trend !== undefined) html += '<tr><td>일일 추세</td><td>' + modelInfo.trend + ' 원/일</td></tr>';
-  if (modelInfo.season_range !== undefined) html += '<tr><td>계절성 진폭</td><td>' + (modelInfo.season_range * 100).toFixed(1) + '%</td></tr>';
-  if (modelInfo.season_peak_month) html += '<tr><td>최고가 월</td><td>' + modelInfo.season_peak_month + '월</td></tr>';
-  if (modelInfo.season_low_month) html += '<tr><td>최저가 월</td><td>' + modelInfo.season_low_month + '월</td></tr>';
+  html += '<tr><td>참고 기간</td><td>' + (modelInfo.data_points ? Math.round(modelInfo.data_points / 365 * 10) / 10 + '년 (' + numberFormat(modelInfo.data_points) + '일)' : '—') + '</td></tr>';
+  if (modelInfo.models_used) {
+    html += '<tr><td>방식</td><td>' + modelInfo.models_used.length + '개 모델 평균</td></tr>';
+  }
+  if (modelInfo.ma30 !== undefined) {
+    html += '<tr><td>최근 1달 평균가</td><td>' + numberFormat(modelInfo.ma30) + '원</td></tr>';
+  }
+  if (modelInfo.season_peak_month && modelInfo.season_low_month) {
+    html += '<tr><td>계절 흐름</td><td>' + modelInfo.season_peak_month + '월 비쌈 · ' + modelInfo.season_low_month + '월 저렴</td></tr>';
+  }
   if (modelInfo.weather_context && modelInfo.weather_context.avg_temp != null) {
-    html += '<tr><td>최근 평균기온</td><td>' + modelInfo.weather_context.avg_temp + '℃</td></tr>';
-    if (modelInfo.weather_adj_pct !== undefined) html += '<tr><td>기상 보정</td><td>' + modelInfo.weather_adj_pct + '%</td></tr>';
-    if (modelInfo.learned_elasticity !== undefined && modelInfo.learned_elasticity !== null) {
-      html += '<tr><td>학습 elasticity</td><td>' + modelInfo.learned_elasticity + ' %/℃</td></tr>';
+    var wc = modelInfo.weather_context;
+    html += '<tr><td>최근 ' + wc.days_back + '일 기온</td><td>평균 ' + wc.avg_temp + '℃</td></tr>';
+    if (modelInfo.weather_adj_pct !== undefined && Math.abs(modelInfo.weather_adj_pct) > 0.1) {
+      var sign = modelInfo.weather_adj_pct > 0 ? '+' : '';
+      html += '<tr><td>날씨 영향</td><td>예측가 ' + sign + modelInfo.weather_adj_pct + '% 보정</td></tr>';
     }
   }
   $('#modelInfoTable').html(html);
