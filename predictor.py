@@ -44,24 +44,26 @@ def _std(values):
 
 
 def _weather_context(days_back=30, station='서울'):
-    """최근 N일 weather 요약 — weather 테이블 비어있으면 None"""
+    """최근 N일 weather 요약 — bulk SELECT 1회. 비어있으면 None"""
+    today = datetime.now()
+    start = (today - timedelta(days=days_back)).strftime('%Y-%m-%d')
+    end = today.strftime('%Y-%m-%d')
+
     try:
-        from weather_collector import get_weather_for_date
-    except ImportError:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            'SELECT avg_temp, precipitation FROM weather '
+            'WHERE date >= ? AND date <= ? AND station = ?',
+            (start, end, station),
+        )
+        rows = cur.fetchall()
+        conn.close()
+    except Exception:
         return None
 
-    today = datetime.now()
-    temps, rains = [], []
-    for d in range(days_back):
-        day = today - timedelta(days=d)
-        w = get_weather_for_date(day.strftime('%Y-%m-%d'), station=station)
-        if not w:
-            continue
-        if w.get('avg_temp') is not None:
-            temps.append(w['avg_temp'])
-        if w.get('precipitation') is not None:
-            rains.append(w['precipitation'])
-
+    temps = [r['avg_temp'] for r in rows if r['avg_temp'] is not None]
+    rains = [r['precipitation'] for r in rows if r['precipitation'] is not None]
     if not temps:
         return None
 
@@ -77,23 +79,33 @@ def _weather_context(days_back=30, station='서울'):
 def _learn_temp_elasticity(product_name, days=365):
     """
     과거 가격·기온 단순 회귀로 품목별 elasticity 학습.
-    실패하면 _TEMP_ELASTICITY 도메인 추정값 반환.
+    bulk SELECT 1회 + price series와 매칭. 실패하면 도메인 추정값.
     반환: %/℃ (가격 변동률 per ℃)
     """
-    try:
-        from weather_collector import get_weather_for_date
-    except ImportError:
-        return _TEMP_ELASTICITY.get(product_name, 0.0)
-
     dates, prices = prepare_price_series(product_name, days=days)
     if not prices or len(prices) < 60:
         return _TEMP_ELASTICITY.get(product_name, 0.0)
 
+    # 같은 기간 weather 한 번에 조회 (1쿼리)
+    start = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+    end = datetime.now().strftime('%Y-%m-%d')
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            'SELECT date, avg_temp FROM weather '
+            'WHERE date >= ? AND date <= ? AND station = ? AND avg_temp IS NOT NULL',
+            (start, end, '서울'),
+        )
+        weather_by_date = {r['date']: r['avg_temp'] for r in cur.fetchall()}
+        conn.close()
+    except Exception:
+        return _TEMP_ELASTICITY.get(product_name, 0.0)
+
     pairs = []
     for d, p in zip(dates, prices):
-        w = get_weather_for_date(d, station='서울')
-        if w and w.get('avg_temp') is not None and p > 0:
-            pairs.append((w['avg_temp'], p))
+        if p > 0 and d in weather_by_date:
+            pairs.append((weather_by_date[d], p))
 
     if len(pairs) < 30:
         return _TEMP_ELASTICITY.get(product_name, 0.0)
