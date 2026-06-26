@@ -61,27 +61,12 @@ def ensure_data():
         init_db()
 
         if IS_POSTGRES:
-            # 영속 DB 운영 로직:
-            # - 실데이터(KAMIS·ATFRESH 등) 100건 이상이면 SAMPLE 자동 정리
-            #   (가격대 차이로 차트 들쭉날쭉 + 데이터 신뢰성 저하 방지)
-            # - 완전히 비어있을 때만 SAMPLE 1회 폴백 적재
+            # 운영 환경 — SAMPLE 폴백 사용 안 함 (KAMIS·ATFRESH 등 실데이터만)
+            # 과거에 잘못 적재된 SAMPLE row가 남아있으면 항상 삭제
             conn = get_db()
             cur = conn.cursor()
-            cur.execute(
-                "SELECT COUNT(*) AS cnt FROM price_data WHERE source != ?",
-                ('SAMPLE',),
-            )
-            real_cnt = cur.fetchone()['cnt']
-            if real_cnt > 100:
-                cur.execute("DELETE FROM price_data WHERE source = ?", ('SAMPLE',))
-                conn.commit()
-            else:
-                cur.execute("SELECT COUNT(*) AS cnt FROM price_data")
-                if cur.fetchone()['cnt'] == 0:
-                    all_data = []
-                    for product_name in PRODUCT_CODES.keys():
-                        all_data.extend(generate_sample_data(product_name, days=365))
-                    save_price_data(all_data)
+            cur.execute("DELETE FROM price_data WHERE source = ?", ('SAMPLE',))
+            conn.commit()
             conn.close()
             _DATA_INITIALIZED = True
             return

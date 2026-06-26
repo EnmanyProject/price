@@ -41,8 +41,6 @@ SOURCE_REGISTRY = [
      'protocol': 'REST/JSON',   'region': '가락·구리·안양·대전 등', 'url': 'https://www.at.or.kr'},
     {'code': 'GARAK',   'name': '가락시장 도매시장통합',   'kind': 'live',
      'protocol': 'HTML/Scrape', 'region': '서울 송파',    'url': 'https://www.garakprice.com'},
-    {'code': 'SAMPLE',  'name': '내부 시뮬레이션 폴백',    'kind': 'live',
-     'protocol': 'Internal',    'region': '—',           'url': ''},
 ]
 
 _REGISTRY_BY_CODE = {s['code']: s for s in SOURCE_REGISTRY}
