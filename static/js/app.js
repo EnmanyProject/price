@@ -85,10 +85,12 @@ function renderProductGrid(products) {
     var iconHtml = product.icon && product.icon.charAt(0) === '/'
       ? '<img class="product-icon" src="' + product.icon + '" alt="' + product.name + '">'
       : '<div class="product-icon">' + (product.icon || '') + '</div>';
+    var per100g = product.price ? Math.round(product.price / 10) : 0;
     html += '<button type="button" class="product-card" onclick="selectProduct(\'' + product.name + '\')" id="card-' + product.name + '">' +
       iconHtml +
       '<div class="product-name">' + product.name + '</div>' +
-      '<div class="product-price">' + numberFormat(product.price) + '원</div>' +
+      '<div class="product-price">' + numberFormat(product.price) + '<span class="unit-sm">원/kg</span></div>' +
+      '<div class="product-sub">100g당 ' + numberFormat(per100g) + '원</div>' +
       '<div class="product-change ' + changeClass + '">' + changeText + '</div>' +
       '</button>';
   });
@@ -199,7 +201,10 @@ function renderPriceChart(productName, history) {
         mode: 'index', intersect: false,
         backgroundColor: COLOR.pine, titleFontFamily: "'Pretendard',sans-serif",
         bodyFontFamily: "'Pretendard',sans-serif", cornerRadius: 8, padding: 12,
-        callbacks: { label: function(t) { return numberFormat(t.yLabel) + '원'; } }
+        callbacks: {
+          label: function(t) { return numberFormat(t.yLabel) + '원/kg'; },
+          afterLabel: function(t) { return '100g당 ' + numberFormat(Math.round(t.yLabel / 10)) + '원'; }
+        }
       },
       scales: {
         xAxes: [{ gridLines: { display: false }, ticks: { maxTicksLimit: 10, fontSize: 11, fontColor: COLOR.muted } }],
@@ -274,9 +279,9 @@ function renderPredictionChart(data) {
     var chgClass = chg > 0.5 ? 'price-up' : (chg < -0.5 ? 'price-down' : 'price-same');
     var chgSign = chg > 0 ? '▲' : (chg < 0 ? '▼' : '—');
     $('#psLastDate').text(lastDate);
-    $('#psLastPrice').text(numberFormat(lastPrice) + '원');
+    $('#psLastPrice').html(numberFormat(lastPrice) + '<span class="unit-sm">원/kg</span>');
     $('#psChange').html('<span class="' + chgClass + '">' + chgSign + ' ' + Math.abs(chg).toFixed(1) + '%</span>');
-    $('#psRange').text(numberFormat(lastLow) + ' ~ ' + numberFormat(lastHigh) + '원');
+    $('#psRange').html(numberFormat(lastLow) + ' ~ ' + numberFormat(lastHigh) + '<span class="unit-sm">원/kg</span>');
     $('#predictionSummary').show();
   }
   if (predictionChart) predictionChart.destroy();
@@ -321,7 +326,7 @@ function renderPredictionChart(data) {
       tooltips: {
         mode: 'index', intersect: false,
         backgroundColor: COLOR.pine, cornerRadius: 8, padding: 12,
-        callbacks: { label: function(t, d) { return d.datasets[t.datasetIndex].label + ': ' + numberFormat(t.yLabel) + '원'; } }
+        callbacks: { label: function(t, d) { return d.datasets[t.datasetIndex].label + ': ' + numberFormat(t.yLabel) + '원/kg'; } }
       },
       scales: {
         xAxes: [{ gridLines: { display: false }, ticks: { maxTicksLimit: 8, fontSize: 11, fontColor: COLOR.muted } }],
@@ -345,7 +350,7 @@ function renderPredictionTable(predictions) {
     }
     html += '<tr>' +
       '<td>' + item.date + '</td>' +
-      '<td class="r"><b>' + numberFormat(item.predicted_price) + '</b></td>' +
+      '<td class="r"><b>' + numberFormat(item.predicted_price) + '</b><span class="unit-row">원/kg</span></td>' +
       '<td class="r" style="color:var(--muted)">' + numberFormat(item.confidence_lower) + '</td>' +
       '<td class="r" style="color:var(--muted)">' + numberFormat(item.confidence_upper) + '</td>' +
       '<td class="c">' + chip + '</td>' +

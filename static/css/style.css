@@ -99,6 +99,8 @@ header.scrolled .burger span{background:var(--pine)}
 .product-icon{display:block;width:42px;height:42px;margin:0 auto 10px;object-fit:contain}
 .product-name{font-family:var(--serif);font-size:15.5px;color:var(--pine);font-weight:700;margin-bottom:4px}
 .product-price{font-size:18px;color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.product-price .unit-sm{font-size:11px;font-weight:600;color:var(--muted);margin-left:3px;letter-spacing:0}
+.product-sub{font-size:11.5px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
 .product-change{font-size:12px;margin-top:5px;font-variant-numeric:tabular-nums}
 .price-up{color:var(--red)}
 .price-down{color:var(--blue)}
